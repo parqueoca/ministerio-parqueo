@@ -158,7 +158,7 @@ const App: React.FC = () => {
         try {
           await calendarService.deleteService(id);
         } catch (error: any) {
-          setServers(backup);
+          setServices(backup as any);
           alert(`Error: ${error.message}`);
           throw error;
         }
@@ -176,7 +176,7 @@ const App: React.FC = () => {
         try {
           await vehicleService.deleteVehicle(id);
         } catch (error: any) {
-          setVehicles(backup);
+          setVehicles(backup as any);
           alert(`Error: ${error.message}`);
           throw error;
         }
