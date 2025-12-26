@@ -1,0 +1,5 @@
+{
+  "name": "Agenda Servidores",
+  "description": "Una aplicación mobile-first para la gestión de servidores, con dashboard, agenda, integración de WhatsApp y soporte offline.",
+  "requestFramePermissions": []
+}
