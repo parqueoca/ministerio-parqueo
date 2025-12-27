@@ -41,8 +41,14 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
   };
 
   const handleWhatsApp = (phone: string) => {
-    const clean = phone.replace(/\D/g, '');
-    window.open(`https://wa.me/${clean}`, '_blank');
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '1' + cleanPhone;
+    }
+    
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    }
   };
 
   return (
