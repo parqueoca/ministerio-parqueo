@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Vehicle, VehicleCategory } from '../types';
 import { ChevronLeft, Save, Car, User, Phone, Tag, Calendar, Palette, FileText, Filter } from 'lucide-react';
@@ -21,8 +20,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
     anio: undefined,
     color: '',
     categoria_id: '',
-    // Fix: changed 'nota' to 'note' to match the Vehicle interface defined in types.ts
-    note: ''
+    nota: ''
   });
 
   useEffect(() => {
@@ -38,8 +36,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
   const handleInputChange = (field: keyof Vehicle, value: string) => {
     if (field === 'placa') {
       setFormData(prev => ({ ...prev, placa: value.toUpperCase() }));
-      // Fix: changed 'nota' to 'note' in the title case validation check
-    } else if (field === 'propietario' || field === 'marca' || field === 'modelo' || field === 'color' || field === 'note') {
+    } else if (field === 'propietario' || field === 'marca' || field === 'modelo' || field === 'color' || field === 'nota') {
       setFormData(prev => ({ ...prev, [field]: toTitleCase(value) }));
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
@@ -49,7 +46,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Asegurarse de que categoria_id se envíe como null si no se seleccionó nada
     const dataToSave = { ...formData };
     if (dataToSave.categoria_id === '') {
       dataToSave.categoria_id = undefined;
@@ -170,10 +166,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><FileText size={12} /> NOTA ADICIONAL</label>
             <textarea 
               rows={3}
-              // Fix: changed property from 'nota' to 'note' to match type definition
-              value={formData.note}
-              // Fix: changed argument from 'nota' to 'note' to match type definition
-              onChange={e => handleInputChange('note', e.target.value)}
+              value={formData.nota}
+              onChange={e => handleInputChange('nota', e.target.value)}
               placeholder="Observaciones..."
               className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
             />
