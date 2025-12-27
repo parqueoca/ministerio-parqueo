@@ -1,11 +1,9 @@
-
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { Vehicle, VehicleCategory } from '../types';
 
 const handleError = (error: any, context: string) => {
   const message = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
   
-  // Detectar si el error es porque la tabla no existe
   const isMissingTable = 
     error.code === '42P01' || 
     message.includes('Could not find the table') || 
@@ -16,7 +14,6 @@ const handleError = (error: any, context: string) => {
     console.error(`Error en ${context}:`, message);
   }
   
-  // Lanzamos el error con un mensaje descriptivo para que App.tsx lo capture
   throw new Error(message);
 };
 
@@ -62,6 +59,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
 export const getVehicles = async (): Promise<Vehicle[]> => {
   if (!isSupabaseConfigured()) return [];
   try {
+    // Nota: Si en tu base de datos la tabla se llama 'vehicles', cambia 'vehiculos' por 'vehicles' abajo
     const { data, error } = await supabase
       .from('vehiculos')
       .select('*, vehiculo_categorias!categoria_id(nombre)')
@@ -74,23 +72,21 @@ export const getVehicles = async (): Promise<Vehicle[]> => {
 };
 
 export const saveVehicle = async (vehicle: Partial<Vehicle>): Promise<Vehicle> => {
-  // Limpiar campos UUID: PostgreSQL no acepta strings vacíos para columnas UUID
-  const payload = { ...vehicle };
+  // Preparamos los datos para enviar
+  const { vehiculo_categorias, ...dataToSave } = vehicle as any;
   
-  // Si categoria_id es un string vacío, lo convertimos a null para que sea válido para la DB
-  if (payload.categoria_id === '') {
-    payload.categoria_id = undefined; // O null
+  // Limpieza de campos UUID opcionales
+  if (!dataToSave.categoria_id || dataToSave.categoria_id === "") {
+    delete dataToSave.categoria_id;
   }
-  
-  // Eliminar el objeto de join si existe para evitar errores en el upsert
-  delete (payload as any).vehiculo_categorias;
 
   try {
     const { data, error } = await supabase
       .from('vehiculos')
-      .upsert([payload])
+      .upsert([dataToSave], { onConflict: 'id' })
       .select()
       .single();
+
     if (error) throw error;
     return data;
   } catch (error) {
