@@ -64,6 +64,12 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
     const dateFormatted = formatDateDisplay(service.date);
     const timeFormatted = formatTime12h(service.arrivalTime);
     
+    // Limpieza de teléfono para formato internacional
+    let cleanPhone = server.mobile.replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '1' + cleanPhone;
+    }
+
     // Formato de mensaje actualizado con encabezado institucional
     const message = `*MINISTERIO SERVICIO PARQUEO*\n` +
       `*CIELOS ABIERTOS*\n\n` +
@@ -73,7 +79,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
       `📍 *Posición:* ${pos ? `${pos.code} - ${pos.name}` : 'Asignada en el sitio'}\n\n` +
       `¡Contamos contigo! Bendiciones. 🙏`;
 
-    const cleanPhone = server.mobile.replace(/\D/g, '');
     const encodedMsg = encodeURIComponent(message);
     
     // Marcar como enviado localmente
@@ -100,7 +105,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
 
   const SegmentedDateSelector = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label: string }) => {
     const [y, m, d] = value ? value.split('-') : ['', '', ''];
-    const currentYear = 2025;
     const years = [2024, 2025, 2026];
     const months = [
       { v: '01', l: 'Ene' }, { v: '02', l: 'Feb' }, { v: '03', l: 'Mar' },
@@ -359,3 +363,4 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
 };
 
 export default ServiceCalendar;
+
