@@ -29,13 +29,25 @@ const ServerCard: React.FC<ServerCardProps> = ({ server, isSelected, onToggleSel
 
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const cleanPhone = displayPhone.replace(/\D/g, '');
-    window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    let cleanPhone = displayPhone.replace(/\D/g, '');
+    
+    // Si el número tiene 10 dígitos (formato DR/NA), añadimos el '1' para formato internacional
+    if (cleanPhone.length === 10) {
+      cleanPhone = '1' + cleanPhone;
+    }
+    
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}`, '_blank');
+    } else {
+      alert("Este servidor no tiene un número de teléfono válido.");
+    }
   };
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
-    window.location.href = `tel:${displayPhone}`;
+    if (displayPhone) {
+      window.location.href = `tel:${displayPhone.replace(/\D/g, '')}`;
+    }
   };
 
   const handlePrint = async (e: React.MouseEvent) => {
