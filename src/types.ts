@@ -1,5 +1,3 @@
-
-
 export enum ServerStatus {
   ACTIVO = 'Activo',
   INACTIVO = 'Inactivo'
@@ -96,7 +94,7 @@ export interface Vehicle {
   anio?: number;
   color?: string;
   categoria_id?: string;
-  note?: string;
+  nota?: string;
   created_at?: string;
   vehiculo_categorias?: {
     nombre: string;
@@ -115,7 +113,6 @@ export interface ServiceAssignment {
   };
 }
 
-// Fix: Added missing ServiceType interface used in calendar services and forms
 export interface ServiceType {
   id: string;
   name: string;
@@ -135,7 +132,6 @@ export interface Service {
   createdAt: number;
 }
 
-// Added 'setup-repair' to ViewState to fix TypeScript errors in App.tsx
 export type ViewState = 
   | 'dashboard' 
   | 'list' 
