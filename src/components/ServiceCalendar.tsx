@@ -4,7 +4,7 @@ import { Service, Group, ParkingPosition, Server } from '../types';
 import { 
   Plus, Edit2, Search, FileDown, Loader2, CheckCircle2, FileText, Filter, CalendarDays, ClipboardCheck, Clock, CalendarSearch, Trash2, MessageCircle, X, Send, Zap, Check
 } from 'lucide-react';
-import { formatTime12h, normalizeString, formatDateDisplay } from '../utils/formatters';
+import { formatTime12h, normalizeString, formatDateDisplay, isPastDate } from '../utils/formatters';
 import { generateServiceReportPDF, generateServiceAssignmentPDF } from '../services/pdfGenerator';
 import AttendanceManager from './AttendanceManager';
 
@@ -16,9 +16,10 @@ interface ServiceCalendarProps {
   onAdd: () => void;
   onEdit: (service: Service) => void;
   onDelete: (id: string) => void;
+  onConfirmRequest?: (title: string, message: string, onConfirm: () => Promise<void>) => void;
 }
 
-const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, positions, servers, onAdd, onEdit, onDelete }) => {
+const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, positions, servers, onAdd, onEdit, onDelete, onConfirmRequest }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -29,7 +30,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
   const [attendanceService, setAttendanceService] = useState<Service | null>(null);
   const [reminderService, setReminderService] = useState<Service | null>(null);
   
-  // Estado para el Turbo Mode de WhatsApp
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const getGroupName = (id: any) => {
@@ -59,18 +59,30 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
     return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [services, searchQuery, startDate, endDate, groupFilter, groups]);
 
+  const handleEditClick = (service: Service) => {
+    if (isPastDate(service.date) && onConfirmRequest) {
+      onConfirmRequest(
+        'SERVICIO REALIZADO',
+        'Este servicio ya ocurrió. ¿Deseas editarlo de todas formas?',
+        async () => {
+          onEdit(service);
+        }
+      );
+    } else {
+      onEdit(service);
+    }
+  };
+
   const handleWhatsAppReminder = (server: Server, service: Service, assignment: any) => {
     const pos = positions.find(p => p.id === assignment.positionId);
     const dateFormatted = formatDateDisplay(service.date);
     const timeFormatted = formatTime12h(service.arrivalTime);
     
-    // Limpieza de teléfono para formato internacional
     let cleanPhone = server.mobile.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = '1' + cleanPhone;
     }
 
-    // Formato de mensaje actualizado con encabezado institucional
     const message = `*MINISTERIO SERVICIO PARQUEO*\n` +
       `*CIELOS ABIERTOS*\n\n` +
       `Hola *${server.firstName}*, te recordamos tu servicio de *Parqueo*:\n\n` +
@@ -80,14 +92,10 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
       `¡Contamos contigo! Bendiciones. 🙏`;
 
     const encodedMsg = encodeURIComponent(message);
-    
-    // Marcar como enviado localmente
     setSentIds(prev => new Set(prev).add(server.id));
-    
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
   };
 
-  // Función para despachar el siguiente recordatorio pendiente
   const dispatchNext = () => {
     if (!reminderService) return;
     const nextAssignment = reminderService.assignments.find(a => !sentIds.has(a.serverId));
@@ -182,7 +190,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
         </div>
       </header>
 
-      {/* MODAL DE REPORTES */}
       {showReportMenu && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
               <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isGenerating && setShowReportMenu(false)} />
@@ -199,7 +206,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
           </div>
       )}
 
-      {/* MODAL DE RECORDATORIOS WHATSAPP (TURBO MODE) */}
       {reminderService && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => { setReminderService(null); setSentIds(new Set()); }} />
@@ -214,7 +220,6 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
               </button>
             </div>
 
-            {/* BARRA DE PROGRESO */}
             <div className="h-1 w-full bg-emerald-100 dark:bg-slate-800">
               <div 
                 className="h-full bg-emerald-500 transition-all duration-500" 
@@ -300,62 +305,75 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
             <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Sin resultados</p>
           </div>
         ) : (
-          filteredServices.map(service => (
-            <div key={service.id} className="bg-white dark:bg-slate-900 rounded-[1.8rem] p-4 border border-slate-200 dark:border-slate-800 animate-fade-in shadow-sm hover:border-blue-500 transition-all group overflow-hidden">
-              <div className="flex justify-between items-center gap-2">
-                <div className="flex gap-3 min-w-0 flex-1" onClick={() => onEdit(service)}>
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-900 dark:text-white border border-slate-300 dark:border-slate-800 group-hover:bg-blue-50 transition-colors flex-shrink-0">
-                    <span className="text-lg font-black leading-none">{service.date.split('-')[2]}</span>
-                    <span className="text-[8px] font-black uppercase mt-0.5 text-blue-600">{new Date(service.date + 'T12:00:00').toLocaleDateString('es', { month: 'short' })}</span>
-                  </div>
-                  <div className="min-w-0 pt-0.5 flex-1">
-                    <h4 className="font-black text-slate-900 dark:text-white text-[13px] leading-tight truncate uppercase tracking-tight">{service.name}</h4>
-                    <div className="flex items-center gap-x-2 text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-1.5 truncate">
-                      <Clock size={10} className="text-blue-500 flex-shrink-0" /> 
-                      <span className="truncate">{formatTime12h(service.arrivalTime)} | {getGroupName(service.groupId)}</span>
+          filteredServices.map(service => {
+            const isFinished = isPastDate(service.date);
+            return (
+              <div 
+                key={service.id} 
+                className={`bg-white dark:bg-slate-900 rounded-[1.8rem] p-4 border animate-fade-in shadow-sm hover:border-blue-500 transition-all group overflow-hidden ${isFinished ? 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/5 dark:bg-emerald-900/5' : 'border-slate-200 dark:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex gap-3 min-w-0 flex-1 cursor-pointer" onClick={() => handleEditClick(service)}>
+                    <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center text-slate-900 dark:text-white border group-hover:bg-blue-50 transition-colors flex-shrink-0 ${isFinished ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-800'}`}>
+                      <span className={`text-lg font-black leading-none ${isFinished ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>{service.date.split('-')[2]}</span>
+                      <span className={`text-[8px] font-black uppercase mt-0.5 ${isFinished ? 'text-emerald-600/70' : 'text-blue-600'}`}>{new Date(service.date + 'T12:00:00').toLocaleDateString('es', { month: 'short' })}</span>
+                    </div>
+                    <div className="min-w-0 pt-0.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-black text-slate-900 dark:text-white text-[13px] leading-tight truncate uppercase tracking-tight max-w-[70%]">{service.name}</h4>
+                        {isFinished && (
+                          <span className="flex-shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-[8px] font-black uppercase tracking-widest animate-fade-in">
+                            <Check size={8} className="fill-current" /> Realizado
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-x-2 text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-1.5 truncate">
+                        <Clock size={10} className={`${isFinished ? 'text-emerald-500' : 'text-blue-500'} flex-shrink-0`} /> 
+                        <span className="truncate">{formatTime12h(service.arrivalTime)} | {getGroupName(service.groupId)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex gap-1 flex-shrink-0 ml-1 relative z-10">
-                  <button 
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setReminderService(service); }} 
-                    className="p-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl active:scale-95 border border-emerald-100/50 flex-shrink-0"
-                    title="Enviar recordatorios"
-                  >
-                    <MessageCircle size={18} />
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setAttendanceService(service); }} 
-                    className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl active:scale-95 border border-blue-100/50 flex-shrink-0"
-                    title="Pasar asistencia"
-                  >
-                    <ClipboardCheck size={18} />
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleSingleServiceReport(service); }} 
-                    disabled={generatingId === service.id} 
-                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex-shrink-0"
-                  >
-                    {generatingId === service.id ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => { 
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDelete(service.id);
-                    }} 
-                    className="p-2 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-xl flex-shrink-0 active:scale-90 transition-transform"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                  <div className="flex gap-1 flex-shrink-0 ml-1 relative z-10">
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setReminderService(service); }} 
+                      className="p-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl active:scale-95 border border-emerald-100/50 flex-shrink-0"
+                      title="Enviar recordatorios"
+                    >
+                      <MessageCircle size={18} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setAttendanceService(service); }} 
+                      className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl active:scale-95 border border-blue-100/50 flex-shrink-0"
+                      title="Pasar asistencia"
+                    >
+                      <ClipboardCheck size={18} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleSingleServiceReport(service); }} 
+                      disabled={generatingId === service.id} 
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex-shrink-0"
+                    >
+                      {generatingId === service.id ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDelete(service.id);
+                      }} 
+                      className="p-2 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/30 rounded-xl flex-shrink-0 active:scale-90 transition-transform"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
