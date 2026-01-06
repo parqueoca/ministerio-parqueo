@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Service, ServiceType, Group, Server, ServiceAssignment, ParkingPosition, ServerStatus } from '../types';
-import { ChevronLeft, Calendar, Clock, Users, Plus, Save, Trash2, MapPin, Search } from 'lucide-react';
+import { Service, ServiceType, Group, Server, ServiceAssignment, ParkingPosition, ServerStatus, ServiceName } from '../types';
+import { ChevronLeft, Calendar, Clock, Users, Plus, Save, Trash2, MapPin, Search, Type } from 'lucide-react';
 import * as calendarService from '../services/serviceCalendarService';
 import { normalizeString, toTitleCase } from '../utils/formatters';
 
@@ -9,11 +9,12 @@ interface ServiceFormProps {
   initialData?: Service | null;
   groups: Group[];
   servers: Server[];
+  serviceNames: ServiceName[];
   onSave: (service: Service) => void;
   onCancel: () => void;
 }
 
-const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers, onSave, onCancel }) => {
+const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers, serviceNames, onSave, onCancel }) => {
   const [isExtra, setIsExtra] = useState(initialData?.isExtra || false);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState(initialData?.arrivalTime || '');
@@ -24,8 +25,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
   
   const [availablePositions, setAvailablePositions] = useState<ParkingPosition[]>([]);
 
-  const serviceTypes = calendarService.getServiceTypes();
-
   useEffect(() => {
     const loadPositions = async () => {
       const pos = await calendarService.getPositions();
@@ -34,16 +33,21 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     loadPositions();
   }, []);
 
+  // Lógica de auto-sufijo para nombres base
   useEffect(() => {
-    if (name.includes('Domingo de Gloria') || (!name && !initialData)) {
+    if (name.startsWith('Domingo de Gloria') || (!name && !initialData)) {
       if (time) {
         const [hours] = time.split(':').map(Number);
         const suffix = hours < 12 ? '(AM)' : '(PM)';
         const baseName = 'Domingo de Gloria';
-        setName(`${baseName} ${suffix}`);
+        
+        // Solo actualizamos si el nombre actual es un "Domingo de Gloria" (con o sin sufijo previo)
+        if (name.startsWith(baseName)) {
+           setName(`${baseName} ${suffix}`);
+        }
       }
     }
-  }, [time]);
+  }, [time, name, initialData]);
 
   useEffect(() => {
     if (!isExtra && date && groups.length > 0) {
@@ -55,12 +59,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
       if (group) setGroupId(group.id);
 
       const day = selectedDate.getDay();
+      const serviceTypes = calendarService.getServiceTypes();
       const type = serviceTypes.find(t => t.dayOfWeek === day);
       if (type && !initialData) {
         setTime(type.defaultTime);
+        // Si no hay nombre manual y es domingo/miercoles sugerir base
+        if (!name) setName(type.name);
       }
     }
-  }, [date, isExtra, groups]);
+  }, [date, isExtra, groups, initialData, name]);
 
   const handleAddServer = (serverId: string) => {
     if (assignments.some(a => a.serverId === serverId)) return;
@@ -75,9 +82,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     setAssignments(assignments.map(a => a.serverId === serverId ? { ...a, positionId } : a));
   };
 
-  // Lógica de filtrado con exclusión de inactivos y orden alfabético
   const filteredServers = servers.filter(s => {
-    // Regla de Negocio: No permitir asignación de servidores inactivos
     if (s.status === ServerStatus.INACTIVO) return false;
 
     const fullName = normalizeString(`${s.firstName} ${s.lastName}`);
@@ -100,6 +105,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name) {
+      alert("Selecciona un nombre de servicio.");
+      return;
+    }
     onSave({
       id: initialData?.id || calendarService.generateId(),
       name,
@@ -125,10 +134,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
 
     const updatePart = (type: 'd' | 'm' | 'y', newVal: string) => {
-      let d = type === 'd' ? newVal : (day || '01');
-      let m = type === 'm' ? newVal : (month || '01');
-      let y = type === 'y' ? newVal : (year || currentYear.toString());
-      setDate(`${y}-${m}-${d}`);
+      let dVal = type === 'd' ? newVal : (day || '01');
+      let mVal = type === 'm' ? newVal : (month || '01');
+      let yVal = type === 'y' ? newVal : (year || currentYear.toString());
+      setDate(`${yVal}-${mVal}-${dVal}`);
     };
 
     return (
@@ -210,16 +219,25 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
         </div>
 
         <div className="space-y-1">
-          <label className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase">Nombre del Servicio</label>
-          <input 
-            type="text" 
+          <label className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase flex items-center gap-1">
+            <Type size={12} /> Nombre del Servicio
+          </label>
+          <select 
             required
             value={name}
-            onChange={(e) => setName(toTitleCase(e.target.value))}
-            placeholder="Ej: Domingo de Gloria (AM)"
+            onChange={(e) => setName(e.target.value)}
             className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white"
-          />
-          <p className="text-[9px] text-gray-400 mt-1">El sufijo (AM/PM) se ajusta automáticamente según la hora.</p>
+          >
+            <option value="">Seleccionar Nombre de Servicio...</option>
+            {/* Conservamos el valor actual si no está en la lista (para ediciones) */}
+            {name && !serviceNames.some(sn => sn.name === name || name.startsWith(sn.name)) && (
+              <option value={name}>{name}</option>
+            )}
+            {serviceNames.map(sn => (
+              <option key={sn.id} value={sn.name}>{sn.name}</option>
+            ))}
+          </select>
+          <p className="text-[9px] text-gray-400 mt-1">El sufijo (AM/PM) se ajusta automáticamente para servicios dominicales.</p>
         </div>
 
         <div className="space-y-1">
@@ -259,7 +277,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
                 <div key={a.serverId} className="flex flex-col gap-2 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm animate-scale-up">
                   <div className="flex gap-3">
                     <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex-shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400 font-bold overflow-hidden border border-blue-100 dark:border-blue-900">
-                      {server?.photo ? <img src={server.photo} className="w-full h-full object-cover" /> : server?.firstName?.[0] || '?'}
+                      {server?.photo ? <img src={server.photo} alt="Avatar" className="w-full h-full object-cover" /> : server?.firstName?.[0] || '?'}
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-bold text-gray-900 dark:text-white leading-tight">
