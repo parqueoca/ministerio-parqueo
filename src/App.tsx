@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { ViewState, Server, Group, ServerStatus, Service, ParkingPosition, Vehicle, VehicleCategory } from './types';
+import { ViewState, Server, Group, ServerStatus, Service, ParkingPosition, Vehicle, VehicleCategory, ServiceName } from './types';
 import * as serverService from './services/serverService';
 import * as calendarService from './services/serviceCalendarService';
 import * as vehicleService from './services/vehicleService';
+import * as serviceNameService from './services/serviceNameService';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { normalizeString } from './utils/formatters';
 import { generateServerPDF } from './services/pdfGenerator';
@@ -18,11 +19,12 @@ import ServiceForm from './components/ServiceForm';
 import VehicleManager from './components/VehicleManager';
 import VehicleForm from './components/VehicleForm';
 import VehicleCategoryManager from './components/VehicleCategoryManager';
+import ServiceNameManager from './components/ServiceNameManager';
 import RankingView from './components/RankingView';
 import PeriodManager from './components/PeriodManager';
 import ConfirmModal from './components/ConfirmModal';
 import { 
-  Search, Settings, Plus, Sun, Moon, Users, MapPin, Trophy, Loader2, Calendar, LayoutDashboard, Car, ChevronRight, Filter, FileDown, Check, X, Tag
+  Search, Settings, Plus, Sun, Moon, Users, MapPin, Trophy, Loader2, Calendar, LayoutDashboard, Car, ChevronRight, Filter, FileDown, Check, X, Tag, Type
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -33,6 +35,7 @@ const App: React.FC = () => {
   const [positions, setPositions] = useState<ParkingPosition[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [categories, setCategories] = useState<VehicleCategory[]>([]);
+  const [serviceNames, setServiceNames] = useState<ServiceName[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
@@ -65,9 +68,14 @@ const App: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [serversData, groupsData, positionsData, servicesData, vehiclesData, catsData] = await Promise.all([
-        serverService.getServers(), serverService.getGroups(), calendarService.getPositions(),
-        calendarService.getServices(), vehicleService.getVehicles(), vehicleService.getCategories()
+      const [serversData, groupsData, positionsData, servicesData, vehiclesData, catsData, serviceNamesData] = await Promise.all([
+        serverService.getServers(), 
+        serverService.getGroups(), 
+        calendarService.getPositions(),
+        calendarService.getServices(), 
+        vehicleService.getVehicles(), 
+        vehicleService.getCategories(),
+        serviceNameService.getServiceNames()
       ]);
       setServers(serversData || []);
       setGroups(groupsData || []);
@@ -75,6 +83,7 @@ const App: React.FC = () => {
       setServices(servicesData || []);
       setVehicles(vehiclesData || []);
       setCategories(catsData || []);
+      setServiceNames(serviceNamesData || []);
     } catch (err: any) {
       console.error("Error cargando datos:", err);
       if (err.message?.includes('not find') || err.message?.includes('exist')) setSetupRequired(true);
@@ -239,6 +248,25 @@ const App: React.FC = () => {
     );
   };
 
+  const handleDeleteServiceName = (id: string) => {
+    openConfirm(
+      '¿ELIMINAR NOMBRE?',
+      'Este nombre ya no aparecerá como sugerencia para nuevos servicios.',
+      async () => {
+        const backup = [...serviceNames];
+        setServiceNames(prev => prev.filter(n => n.id !== id));
+        try {
+          await serviceNameService.deleteServiceName(id);
+          fetchData();
+        } catch (error: any) {
+          setServiceNames(backup);
+          alert("Error: No se pudo eliminar el nombre de servicio.");
+          throw error;
+        }
+      }
+    );
+  };
+
   const processedServers = useMemo(() => {
     let result = servers.filter(s => {
       const q = normalizeString(searchQuery);
@@ -316,7 +344,7 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        {!['form', 'service-form', 'vehicle-form', 'groups', 'positions', 'period-manager', 'setup-repair', 'vehicle-categories'].includes(view) && (
+        {!['form', 'service-form', 'vehicle-form', 'groups', 'positions', 'period-manager', 'setup-repair', 'vehicle-categories', 'service-names'].includes(view) && (
           <nav className="flex px-1 bg-blue-600 dark:bg-slate-900 border-t border-white/5">
             <TabButton id="dashboard" label="Inicio" icon={LayoutDashboard} />
             <TabButton id="list" label="Servidores" icon={Users} />
@@ -418,7 +446,7 @@ const App: React.FC = () => {
             {view === 'vehicles' && <VehicleManager vehicles={vehicles} categories={categories} onAdd={() => { setEditingVehicle(null); setView('vehicle-form'); }} onEdit={(v) => { setEditingVehicle(v); setView('vehicle-form'); }} onDelete={handleDeleteVehicle} />}
             {view === 'form' && <ServerForm initialData={editingServer} groups={groups} onSave={async (d) => { if(editingServer) await serverService.updateServer(editingServer.id, d); else await serverService.addServer(d); setView('list'); fetchData(); }} onCancel={() => setView('list')} isSubmitting={false} />}
             {view === 'vehicle-form' && <VehicleForm initialData={editingVehicle} categories={categories} onSave={async (v) => { await vehicleService.saveVehicle(v); setView('vehicles'); fetchData(); }} onCancel={() => setView('vehicles')} />}
-            {view === 'service-form' && <ServiceForm initialData={editingService} groups={groups} servers={servers} onSave={async (s) => { await calendarService.saveService(s); setView('calendar'); fetchData(); }} onCancel={() => setView('calendar')} />}
+            {view === 'service-form' && <ServiceForm initialData={editingService} groups={groups} servers={servers} serviceNames={serviceNames} onSave={async (s) => { await calendarService.saveService(s); setView('calendar'); fetchData(); }} onCancel={() => setView('calendar')} />}
             
             {view === 'settings' && (
               <div className="space-y-4 animate-fade-in">
@@ -430,6 +458,15 @@ const App: React.FC = () => {
                         <Users size={20} />
                       </div>
                       <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">Gestionar Grupos</span>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-300" />
+                  </button>
+                  <button onClick={() => setView('service-names')} className="card-chrome w-full flex justify-between p-5 rounded-2xl items-center active:scale-[0.98] transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-xl flex items-center justify-center">
+                        <Type size={20} />
+                      </div>
+                      <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">Nombres de Servicios</span>
                     </div>
                     <ChevronRight size={18} className="text-slate-300" />
                   </button>
@@ -478,6 +515,15 @@ const App: React.FC = () => {
             {view === 'positions' && <PositionManager positions={positions} onAdd={async (c, n) => { await calendarService.addPosition(c, n); fetchData(); }} onDelete={handleDeletePosition} onClose={() => setView('settings')} />}
             {view === 'period-manager' && <PeriodManager onClose={() => setView('settings')} />}
             {view === 'vehicle-categories' && <VehicleCategoryManager categories={categories} onAdd={async (n, d) => { await vehicleService.addCategory({ nombre: n, descripcion: d, activo: true }); fetchData(); }} onUpdate={async (id, n, d) => { await vehicleService.updateCategory(id, { nombre: n, descripcion: d }); fetchData(); }} onDelete={handleDeleteVehicleCategory} onClose={() => setView('settings')} />}
+            {view === 'service-names' && (
+              <ServiceNameManager 
+                names={serviceNames} 
+                onAdd={async (n) => { await serviceNameService.createServiceName(n); fetchData(); }} 
+                onUpdate={async (id, n) => { await serviceNameService.updateServiceName(id, n); fetchData(); }} 
+                onDelete={handleDeleteServiceName} 
+                onClose={() => setView('settings')} 
+              />
+            )}
             {view === 'setup-repair' && <DatabaseSetup onClose={() => setView('settings')} />}
           </div>
         )}
