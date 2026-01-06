@@ -1,3 +1,4 @@
+
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { Vehicle, VehicleCategory } from '../types';
 
@@ -46,6 +47,21 @@ export const addCategory = async (cat: Partial<VehicleCategory>): Promise<Vehicl
   }
 };
 
+export const updateCategory = async (id: string, updates: Partial<VehicleCategory>): Promise<VehicleCategory> => {
+  try {
+    const { data, error } = await supabase
+      .from('vehiculo_categorias')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    return handleError(error, 'updating category');
+  }
+};
+
 export const deleteCategory = async (id: string): Promise<void> => {
   try {
     const { error } = await supabase.from('vehiculo_categorias').delete().eq('id', id);
@@ -59,7 +75,6 @@ export const deleteCategory = async (id: string): Promise<void> => {
 export const getVehicles = async (): Promise<Vehicle[]> => {
   if (!isSupabaseConfigured()) return [];
   try {
-    // Nota: Si en tu base de datos la tabla se llama 'vehicles', cambia 'vehiculos' por 'vehicles' abajo
     const { data, error } = await supabase
       .from('vehiculos')
       .select('*, vehiculo_categorias!categoria_id(nombre)')
@@ -72,21 +87,20 @@ export const getVehicles = async (): Promise<Vehicle[]> => {
 };
 
 export const saveVehicle = async (vehicle: Partial<Vehicle>): Promise<Vehicle> => {
-  // Preparamos los datos para enviar
-  const { vehiculo_categorias, ...dataToSave } = vehicle as any;
+  const payload = { ...vehicle };
   
-  // Limpieza de campos UUID opcionales
-  if (!dataToSave.categoria_id || dataToSave.categoria_id === "") {
-    delete dataToSave.categoria_id;
+  if (payload.categoria_id === '') {
+    payload.categoria_id = undefined;
   }
+  
+  delete (payload as any).vehiculo_categorias;
 
   try {
     const { data, error } = await supabase
       .from('vehiculos')
-      .upsert([dataToSave], { onConflict: 'id' })
+      .upsert([payload])
       .select()
       .single();
-
     if (error) throw error;
     return data;
   } catch (error) {
