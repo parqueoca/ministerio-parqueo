@@ -1,3 +1,4 @@
+
 export enum ServerStatus {
   ACTIVO = 'Activo',
   INACTIVO = 'Inactivo'
@@ -101,6 +102,14 @@ export interface Vehicle {
   };
 }
 
+// --- SERVICE NAMES MODULE TYPES ---
+
+export interface ServiceName {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
 // --- CALENDAR MODULE TYPES ---
 
 export interface ServiceAssignment {
@@ -145,6 +154,7 @@ export type ViewState =
   | 'vehicles'
   | 'vehicle-form'
   | 'vehicle-categories'
+  | 'service-names'
   | 'ranking'
   | 'attendance'
   | 'period-manager'
