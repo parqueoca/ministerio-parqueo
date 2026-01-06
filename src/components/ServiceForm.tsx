@@ -149,23 +149,23 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
             <select 
                 value={day} 
                 onChange={(e) => updatePart('d', e.target.value)}
-                className="w-1/4 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                className="w-1/4 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             >
-                {days.map(d => <option key={d} value={d}>{d}</option>)}
+                {days.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
             </select>
             <select 
                 value={month} 
                 onChange={(e) => updatePart('m', e.target.value)}
-                className="w-1/3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                className="w-1/3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             >
-                 {months.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+                 {months.map(m => <option key={m.val} value={m.val} className="text-slate-900">{m.label}</option>)}
             </select>
             <select 
                 value={year} 
                 onChange={(e) => updatePart('y', e.target.value)}
-                className="flex-1 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+                className="flex-1 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             >
-                 {years.map(y => <option key={y} value={y.toString()}>{y}</option>)}
+                 {years.map(y => <option key={y} value={y.toString()} className="text-slate-900">{y}</option>)}
             </select>
         </div>
       </div>
@@ -213,7 +213,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
               required
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white"
+              className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             />
           </div>
         </div>
@@ -226,15 +226,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white"
+            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
           >
-            <option value="">Seleccionar Nombre de Servicio...</option>
+            <option value="" className="text-slate-900">Seleccionar Nombre de Servicio...</option>
             {/* Conservamos el valor actual si no está en la lista (para ediciones) */}
             {name && !serviceNames.some(sn => sn.name === name || name.startsWith(sn.name)) && (
-              <option value={name}>{name}</option>
+              <option value={name} className="text-slate-900">{name}</option>
             )}
             {serviceNames.map(sn => (
-              <option key={sn.id} value={sn.name}>{sn.name}</option>
+              <option key={sn.id} value={sn.name} className="text-slate-900">{sn.name}</option>
             ))}
           </select>
           <p className="text-[9px] text-gray-400 mt-1">El sufijo (AM/PM) se ajusta automáticamente para servicios dominicales.</p>
@@ -246,12 +246,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
             value={groupId}
             onChange={(e) => setGroupId(e.target.value)}
             required
-            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white"
+            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
           >
-            <option value="">Seleccionar Grupo</option>
-            {isExtra && <option value="MULTI">Varios Grupos</option>}
+            <option value="" className="text-slate-900">Seleccionar Grupo</option>
+            {isExtra && <option value="MULTI" className="text-slate-900">Varios Grupos</option>}
             {groups.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+              <option key={g.id} value={g.id} className="text-slate-900">{g.name}</option>
             ))}
           </select>
           {!isExtra && <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">Auto-calculado según rotación</p>}
@@ -299,16 +299,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
                     <select 
                       value={a.positionId}
                       onChange={(e) => updatePosition(a.serverId, e.target.value)}
-                      className="flex-1 text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-700 dark:text-blue-300 font-bold"
+                      className="flex-1 text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-700 dark:text-blue-300 font-bold outline-none"
                     >
-                      <option value="">-- Elige una Posición Libre --</option>
+                      <option value="" className="text-slate-900">-- Elige una Posición Libre --</option>
                       {a.positionId && !filteredPositions.some(p => p.id === a.positionId) && (
-                        <option value={a.positionId}>
+                        <option value={a.positionId} className="text-slate-900">
                            {availablePositions.find(p => p.id === a.positionId)?.code} - {availablePositions.find(p => p.id === a.positionId)?.name}
                         </option>
                       )}
                       {filteredPositions.map(p => (
-                        <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                        <option key={p.id} value={p.id} className="text-slate-900">{p.code} - {p.name}</option>
                       ))}
                     </select>
                   </div>
