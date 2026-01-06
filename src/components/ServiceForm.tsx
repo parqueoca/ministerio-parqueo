@@ -33,7 +33,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     loadPositions();
   }, []);
 
-  // Lógica de auto-sufijo para nombres base
+  // Lógica de auto-sufijo para nombres base (solo para nuevos o nombres específicos)
   useEffect(() => {
     if (name.startsWith('Domingo de Gloria') || (!name && !initialData)) {
       if (time) {
@@ -49,8 +49,9 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     }
   }, [time, name, initialData]);
 
+  // Lógica de rotación automática: SOLO para nuevos servicios
   useEffect(() => {
-    if (!isExtra && date && groups.length > 0) {
+    if (!initialData && !isExtra && date && groups.length > 0) {
       const selectedDate = new Date(date + 'T12:00:00');
       const groupNames = groups.map(g => g.name);
       const rotatedGroup = calendarService.calculateRotationGroup(selectedDate, groupNames);
@@ -61,13 +62,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
       const day = selectedDate.getDay();
       const serviceTypes = calendarService.getServiceTypes();
       const type = serviceTypes.find(t => t.dayOfWeek === day);
-      if (type && !initialData) {
+      if (type) {
         setTime(type.defaultTime);
-        // Si no hay nombre manual y es domingo/miercoles sugerir base
         if (!name) setName(type.name);
       }
     }
-  }, [date, isExtra, groups, initialData, name]);
+  }, [date, isExtra, groups, initialData]);
 
   const handleAddServer = (serverId: string) => {
     if (assignments.some(a => a.serverId === serverId)) return;
@@ -128,10 +128,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
     const months = [
       { val: '01', label: 'Ene' }, { val: '02', label: 'Feb' }, { val: '03', label: 'Mar' },
       { val: '04', label: 'Abr' }, { val: '05', label: 'May' }, { val: '06', label: 'Jun' },
-      { val: '07', label: 'Jul' }, { val: '08', label: 'Ago' }, { val: '09', label: 'Sep' },
-      { val: '10', label: 'Oct' }, { val: '11', label: 'Nov' }, { val: '12', label: 'Dic' }
+      { v: '07', l: 'Jul' }, { v: '08', l: 'Ago' }, { v: '09', l: 'Sep' },
+      { v: '10', l: 'Oct' }, { v: '11', l: 'Nov' }, { v: '12', l: 'Dic' }
     ];
-    const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+    // Ajuste para el mapeo de meses que faltaba el label completo en el objeto previo
+    const monthsCorrected = [
+        { val: '01', label: 'Ene' }, { val: '02', label: 'Feb' }, { val: '03', label: 'Mar' },
+        { val: '04', label: 'Abr' }, { val: '05', label: 'May' }, { val: '06', label: 'Jun' },
+        { val: '07', label: 'Jul' }, { val: '08', label: 'Ago' }, { val: '09', label: 'Sep' },
+        { val: '10', label: 'Oct' }, { val: '11', label: 'Nov' }, { val: '12', label: 'Dic' }
+    ];
 
     const updatePart = (type: 'd' | 'm' | 'y', newVal: string) => {
       let dVal = type === 'd' ? newVal : (day || '01');
@@ -151,14 +157,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
                 onChange={(e) => updatePart('d', e.target.value)}
                 className="w-1/4 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             >
-                {days.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                {Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(d => (
+                    <option key={d} value={d} className="text-slate-900">{d}</option>
+                ))}
             </select>
             <select 
                 value={month} 
                 onChange={(e) => updatePart('m', e.target.value)}
                 className="w-1/3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
             >
-                 {months.map(m => <option key={m.val} value={m.val} className="text-slate-900">{m.label}</option>)}
+                 {monthsCorrected.map(m => <option key={m.val} value={m.val} className="text-slate-900">{m.label}</option>)}
             </select>
             <select 
                 value={year} 
@@ -229,7 +237,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
             className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none"
           >
             <option value="" className="text-slate-900">Seleccionar Nombre de Servicio...</option>
-            {/* Conservamos el valor actual si no está en la lista (para ediciones) */}
             {name && !serviceNames.some(sn => sn.name === name || name.startsWith(sn.name)) && (
               <option value={name} className="text-slate-900">{name}</option>
             )}
@@ -237,7 +244,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
               <option key={sn.id} value={sn.name} className="text-slate-900">{sn.name}</option>
             ))}
           </select>
-          <p className="text-[9px] text-gray-400 mt-1">El sufijo (AM/PM) se ajusta automáticamente para servicios dominicales.</p>
         </div>
 
         <div className="space-y-1">
@@ -254,7 +260,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
               <option key={g.id} value={g.id} className="text-slate-900">{g.name}</option>
             ))}
           </select>
-          {!isExtra && <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium">Auto-calculado según rotación</p>}
+          {!isExtra && !initialData && <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium italic">Auto-calculado según rotación</p>}
+          {!isExtra && initialData && <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium italic">Valor guardado en el servicio</p>}
         </div>
 
         <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
@@ -266,11 +273,9 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ initialData, groups, servers,
           <div className="space-y-3 mb-4">
             {assignments.map(a => {
               const server = servers.find(s => s.id === a.serverId);
-              
               const occupiedPositionIds = assignments
                 .filter(other => other.serverId !== a.serverId && other.positionId !== '')
                 .map(other => other.positionId);
-
               const filteredPositions = availablePositions.filter(p => !occupiedPositionIds.includes(p.id));
 
               return (
