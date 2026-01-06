@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ViewState, Server, Group, ServerStatus, Service, ParkingPosition, Vehicle, VehicleCategory, ServiceName } from './types';
 import * as serverService from './services/serverService';
@@ -167,6 +166,7 @@ const App: React.FC = () => {
         try {
           await calendarService.deleteService(id);
         } catch (error: any) {
+          // Fix: Corrected setServers to setServices when restoring backup for services.
           setServices(backup);
           alert(`Error: ${error.message}`);
           throw error;
@@ -441,7 +441,18 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
-            {view === 'calendar' && <ServiceCalendar services={services} groups={groups} positions={positions} servers={servers} onAdd={() => { setEditingService(null); setView('service-form'); }} onEdit={(s) => { setEditingService(s); setView('service-form'); }} onDelete={handleDeleteService} />}
+            {view === 'calendar' && (
+              <ServiceCalendar 
+                services={services} 
+                groups={groups} 
+                positions={positions} 
+                servers={servers} 
+                onAdd={() => { setEditingService(null); setView('service-form'); }} 
+                onEdit={(s) => { setEditingService(s); setView('service-form'); }} 
+                onDelete={handleDeleteService} 
+                onConfirmRequest={openConfirm}
+              />
+            )}
             {view === 'ranking' && <RankingView groups={groups} />}
             {view === 'vehicles' && <VehicleManager vehicles={vehicles} categories={categories} onAdd={() => { setEditingVehicle(null); setView('vehicle-form'); }} onEdit={(v) => { setEditingVehicle(v); setView('vehicle-form'); }} onDelete={handleDeleteVehicle} />}
             {view === 'form' && <ServerForm initialData={editingServer} groups={groups} onSave={async (d) => { if(editingServer) await serverService.updateServer(editingServer.id, d); else await serverService.addServer(d); setView('list'); fetchData(); }} onCancel={() => setView('list')} isSubmitting={false} />}
