@@ -97,7 +97,7 @@ const RankingView: React.FC<RankingViewProps> = ({ groups }) => {
               onChange={(e) => setSelectedPeriodo(e.target.value)}
               className="w-full bg-transparent text-[11px] font-black dark:text-white outline-none"
             >
-              {periodos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              {periodos.map(p => <option key={p.id} value={p.id} className="text-slate-900">{p.nombre}</option>)}
             </select>
           </div>
         </div>
@@ -109,8 +109,8 @@ const RankingView: React.FC<RankingViewProps> = ({ groups }) => {
               onChange={(e) => setSelectedGroup(e.target.value)}
               className="w-full bg-transparent text-[11px] font-black dark:text-white outline-none"
             >
-              <option value="ALL">Todos los grupos</option>
-              {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+              <option value="ALL" className="text-slate-900">Todos los grupos</option>
+              {groups.map(g => <option key={g.id} value={g.name} className="text-slate-900">{g.name}</option>)}
             </select>
           </div>
         </div>
