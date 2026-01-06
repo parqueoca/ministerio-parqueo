@@ -128,16 +128,16 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
         </label>
         <div className="flex gap-1.5">
           <select value={d} onChange={e => update('d', e.target.value)} className="w-1/4 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[10px] font-bold dark:text-white outline-none">
-            <option value="">Día</option>
-            {days.map(day => <option key={day} value={day}>{day}</option>)}
+            <option value="" className="text-slate-900">Día</option>
+            {days.map(day => <option key={day} value={day} className="text-slate-900">{day}</option>)}
           </select>
           <select value={m} onChange={e => update('m', e.target.value)} className="w-1/3 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[10px] font-bold dark:text-white outline-none">
-            <option value="">Mes</option>
-            {months.map(mon => <option key={mon.v} value={mon.v}>{mon.l}</option>)}
+            <option value="" className="text-slate-900">Mes</option>
+            {months.map(mon => <option key={mon.v} value={mon.v} className="text-slate-900">{mon.l}</option>)}
           </select>
           <select value={y} onChange={e => update('y', e.target.value)} className="flex-1 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[10px] font-bold dark:text-white outline-none">
-            <option value="">Año</option>
-            {years.map(yr => <option key={yr} value={yr.toString()}>{yr}</option>)}
+            <option value="" className="text-slate-900">Año</option>
+            {years.map(yr => <option key={yr} value={yr.toString()} className="text-slate-900">{yr}</option>)}
           </select>
         </div>
       </div>
@@ -285,9 +285,9 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
           <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border-l-2 border-l-slate-400">
             <Filter size={12} className="text-slate-500 ml-0.5 flex-shrink-0" />
             <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="flex-1 bg-transparent text-[10px] font-black dark:text-white outline-none uppercase tracking-[0.05em]">
-              <option value="ALL">Todos los Grupos</option>
-              {groups.map(g => <option key={g.id} value={g.id}>{g.name.toUpperCase()}</option>)}
-              <option value="MULTI">Eventos Especiales</option>
+              <option value="ALL" className="text-slate-900">Todos los Grupos</option>
+              {groups.map(g => <option key={g.id} value={g.id} className="text-slate-900">{g.name.toUpperCase()}</option>)}
+              <option value="MULTI" className="text-slate-900">Eventos Especiales</option>
             </select>
           </div>
         </div>
@@ -363,4 +363,3 @@ const ServiceCalendar: React.FC<ServiceCalendarProps> = ({ services, groups, pos
 };
 
 export default ServiceCalendar;
-
