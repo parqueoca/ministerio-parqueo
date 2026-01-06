@@ -31,17 +31,14 @@ export const formatTime12h = (time24: string): string => {
 
 /**
  * Convierte texto a Title Case.
- * Se eliminó el .trim() inicial para permitir que el usuario escriba espacios
- * en inputs controlados de React.
  */
 export const toTitleCase = (str: string): string => {
   if (!str) return '';
   
-  // Dividimos por espacios simples para preservar los espacios que el usuario está escribiendo
   return str
     .split(' ')
     .map(word => {
-      if (word.length === 0) return ''; // Preserva espacios múltiples si los hay
+      if (word.length === 0) return ''; 
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join(' ');
@@ -56,7 +53,6 @@ export const calculateAge = (dateString: string): string => {
   if (!dateString) return '';
   const today = new Date();
   
-  // Asegurar que manejamos aaaa-mm-dd para el cálculo
   let dateToCalc = dateString;
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
     const [d, m, y] = dateString.split('/');
@@ -98,4 +94,16 @@ export const calculateTimeUntilBirthday = (dateString: string): string => {
   if (months < 0) months += 12;
   if (months > 0) return `En ${months} mes${months > 1 ? 'es' : ''}`;
   return `En ${diffDays} días`;
+};
+
+/**
+ * Verifica si una fecha es anterior a hoy (ignora la hora).
+ */
+export const isPastDate = (dateString: string): boolean => {
+  if (!dateString) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const serviceDate = new Date(dateString + 'T00:00:00');
+  return serviceDate < today;
 };
