@@ -1,20 +1,27 @@
 
 import React, { useState } from 'react';
 import { VehicleCategory } from '../types';
-import { Trash2, Plus, ChevronLeft, Tag, FileText } from 'lucide-react';
+import { Trash2, Plus, ChevronLeft, Tag, FileText, Edit, Check, X } from 'lucide-react';
 import { toTitleCase } from '../utils/formatters';
 
 interface VehicleCategoryManagerProps {
   categories: VehicleCategory[];
   onAdd: (name: string, description?: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onUpdate: (id: string, name: string, description?: string) => Promise<void>;
+  onDelete: (id: string) => void;
   onClose: () => void;
 }
 
-const VehicleCategoryManager: React.FC<VehicleCategoryManagerProps> = ({ categories, onAdd, onDelete, onClose }) => {
+const VehicleCategoryManager: React.FC<VehicleCategoryManagerProps> = ({ categories, onAdd, onUpdate, onDelete, onClose }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estados para edición
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +32,31 @@ const VehicleCategoryManager: React.FC<VehicleCategoryManagerProps> = ({ categor
     setName('');
     setDescription('');
     setIsSubmitting(false);
+  };
+
+  const startEdit = (cat: VehicleCategory) => {
+    setEditingId(cat.id);
+    setEditName(cat.nombre);
+    setEditDescription(cat.descripcion || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+    setEditDescription('');
+  };
+
+  const handleUpdate = async (id: string) => {
+    if (!editName.trim()) return;
+    setIsUpdating(true);
+    try {
+      await onUpdate(id, editName.trim(), editDescription.trim() || undefined);
+      setEditingId(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -86,17 +118,66 @@ const VehicleCategoryManager: React.FC<VehicleCategoryManagerProps> = ({ categor
           
           {categories.map(cat => (
             <div key={cat.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl shadow-sm animate-fade-in-up">
-              <div className="flex flex-col">
-                <span className="font-bold text-gray-800 dark:text-slate-200">{cat.nombre}</span>
-                {cat.descripcion && <span className="text-[10px] text-gray-500 dark:text-slate-500">{cat.descripcion}</span>}
+              {editingId === cat.id ? (
+                <div className="flex-1 mr-2 space-y-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(toTitleCase(e.target.value))}
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-900 rounded-lg text-sm font-bold dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(toTitleCase(e.target.value))}
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-900 rounded-lg text-[10px] dark:text-slate-300"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="font-bold text-gray-800 dark:text-slate-200 truncate">{cat.nombre}</span>
+                  {cat.descripcion && <span className="text-[10px] text-gray-500 dark:text-slate-500 truncate">{cat.descripcion}</span>}
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1">
+                {editingId === cat.id ? (
+                  <>
+                    <button 
+                      type="button"
+                      disabled={isUpdating}
+                      onClick={() => handleUpdate(cat.id)}
+                      className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                    >
+                      {isUpdating ? <div className="w-4 h-4 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin" /> : <Check size={18} />}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={cancelEdit}
+                      className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      type="button"
+                      onClick={() => startEdit(cat)}
+                      className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => onDelete(cat.id)}
+                      className="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
               </div>
-              <button 
-                type="button"
-                onClick={() => onDelete(cat.id)}
-                className="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-              >
-                <Trash2 size={18} />
-              </button>
             </div>
           ))}
         </div>
