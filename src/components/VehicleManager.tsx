@@ -40,14 +40,16 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
     finally { setIsGenerating(false); }
   };
 
-  const handleWhatsApp = (phone: string) => {
+  const handleWhatsApp = (phone: string, plate: string, owner: string) => {
     let cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.length === 10) {
       cleanPhone = '1' + cleanPhone;
     }
     
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}`, '_blank');
+      const message = `🚗 *Ministerio de Parqueo | Iglesia Cielos Abiertos*\n\nEstimado(a) *${owner.toUpperCase()}*,\n\nLe informamos que el vehículo placa: *${plate.toUpperCase()}* está bloqueando la salida de otro vehículo. Por favor, acérquese a moverlo o envíe la llave para poder asistirle.\n\n*Gracias por su colaboración. Bendiciones.*`;
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
     }
   };
 
@@ -108,7 +110,7 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
 
       <div className="grid gap-4">
         {filtered.length === 0 ? (
-          <div className="card-surface rounded-[2.5rem] py-16 text-center border-dashed border-2 bg-white/50">
+          <div className="card-chrome rounded-[2.5rem] py-16 text-center border-dashed border-2 bg-white/50 dark:bg-slate-900/50">
             <Car size={48} className="mx-auto text-slate-300 mb-4 opacity-50" />
             <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sin vehículos</p>
           </div>
@@ -116,7 +118,7 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
           filtered.map(v => {
             const categoryData = Array.isArray(v.vehiculo_categorias) ? v.vehiculo_categorias[0] : v.vehiculo_categorias;
             return (
-              <div key={v.id} className="card-surface rounded-[2rem] p-5 animate-fade-in-up hover:border-blue-500 transition-all group">
+              <div key={v.id} className="card-chrome rounded-[2rem] p-5 animate-fade-in-up hover:border-blue-500 transition-all group">
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4 min-w-0">
                     <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 border border-slate-300 dark:border-slate-800 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
@@ -148,7 +150,6 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
                       onClick={(e) => { 
                         e.preventDefault();
                         e.stopPropagation();
-                        e.nativeEvent.stopImmediatePropagation();
                         onDelete(v.id); 
                       }} 
                       className="p-3.5 -m-1 text-rose-500 hover:bg-rose-50 rounded-xl active:scale-90"
@@ -160,7 +161,7 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
                 {v.celular && (
                   <button 
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleWhatsApp(v.celular!); }}
+                    onClick={(e) => { e.stopPropagation(); handleWhatsApp(v.celular!, v.placa, v.propietario); }}
                     className="w-full mt-4 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
                     <MessageCircle size={14} /> Contactar Propietario
