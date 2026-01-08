@@ -42,14 +42,22 @@ const VehicleManager: React.FC<VehicleManagerProps> = ({ vehicles, categories, o
 
   const handleWhatsApp = (phone: string, plate: string, owner: string) => {
     let cleanPhone = phone.replace(/\D/g, '');
+    
+    // Si el número tiene 10 dígitos (formato local), añadimos el código de país (1 para Rep. Dom / NA)
     if (cleanPhone.length === 10) {
       cleanPhone = '1' + cleanPhone;
     }
     
     if (cleanPhone) {
       const message = `🚗 *Ministerio de Parqueo | Iglesia Cielos Abiertos*\n\nEstimado(a) *${owner.toUpperCase()}*,\n\nLe informamos que el vehículo placa: *${plate.toUpperCase()}* está bloqueando la salida de otro vehículo. Por favor, acérquese a moverlo o envíe la llave para poder asistirle.\n\n*Gracias por su colaboración. Bendiciones.*`;
+      
       const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
+      
+      // Usamos api.whatsapp.com/send y window.location.href para máxima compatibilidad en móviles
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
+      
+      // En móviles, location.href es más fiable para disparar la App directamente
+      window.location.href = whatsappUrl;
     }
   };
 
