@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
-import { Server, Group, VehicleCategory, Vehicle, Service } from './types';
-
-import * as serverService from './services/serverService';
-import * as vehicleService from './services/vehicleService';
-import * as serviceNameService from './services/serviceNameService';
-import * as calendarService from './services/serviceCalendarService';
-
-import Dashboard from './components/Dashboard';
-import ServerForm from './components/ServerForm';
-import VehicleManager from './components/VehicleManager';
-import VehicleCategoryManager from './components/VehicleCategoryManager';
-import ServiceCalendar from './components/ServiceCalendar';
-import ServiceNameManager from './components/ServiceNameManager';
-import RankingView from './components/RankingView';
-import PeriodManager from './components/PeriodManager';
-import ConfirmModal from './components/ConfirmModal';
 
 /* ======================================================
    🔐 PANTALLA DE ACCESO
@@ -77,136 +61,34 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 ====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
-  const [servers, setServers] = useState<Server[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
 
   // Recupera sesión
   useEffect(() => {
     const saved = getSessionAccess();
     if (saved) setAccessLevel(saved);
-
-    // Carga inicial de datos
-    serverService.getServers().then(setServers);
-    vehicleService.getVehicles().then(setVehicles);
-    vehicleService.getVehicleCategories().then(setVehicleCategories);
-    calendarService.getServices().then(setServices);
-    serverService.getGroups().then(setGroups);
   }, []);
 
+  // Si no hay acceso, muestra pantalla de login
   if (!accessLevel) {
     return <AccessGate onAccess={setAccessLevel} />;
   }
 
-  // WRAPPERS FUNCIONALES
-  const handleSaveServer = (server: Server) => {
-    serverService.saveServer(server).then(() => serverService.getServers().then(setServers));
-  };
-
-  const handleAddCategory = async (name: string, description?: string) => {
-    await vehicleService.addVehicleCategory({ nombre: name, descripcion: description, activo: true });
-    const updated = await vehicleService.getVehicleCategories();
-    setVehicleCategories(updated);
-  };
-
-  const handleUpdateCategory = async (id: string, name: string, description?: string) => {
-    await vehicleService.updateVehicleCategory(id, { nombre: name, descripcion: description });
-    const updated = await vehicleService.getVehicleCategories();
-    setVehicleCategories(updated);
-  };
-
-  const handleDeleteCategory = async (id: string) => {
-    await vehicleService.deleteVehicleCategory(id);
-    const updated = await vehicleService.getVehicleCategories();
-    setVehicleCategories(updated);
-  };
-
-  const handleAddVehicle = async (v: Vehicle) => {
-    await vehicleService.addVehicle(v);
-    const updated = await vehicleService.getVehicles();
-    setVehicles(updated);
-  };
-
-  const handleEditVehicle = async (v: Vehicle) => {
-    await vehicleService.updateVehicle(v);
-    const updated = await vehicleService.getVehicles();
-    setVehicles(updated);
-  };
-
-  const handleDeleteVehicle = async (id: string) => {
-    await vehicleService.deleteVehicle(id);
-    const updated = await vehicleService.getVehicles();
-    setVehicles(updated);
-  };
-
-  const handleAddServiceName = async (name: string) => {
-    await serviceNameService.addServiceName({ name });
-  };
-
-  const handleUpdateServiceName = async (id: string, name: string) => {
-    await serviceNameService.updateServiceName(id, { name });
-  };
-
-  const handleDeleteServiceName = async (id: string) => {
-    await serviceNameService.deleteServiceName(id);
-  };
-
+  // APP funcional mínima: muestra dashboard y nivel de acceso
   return (
-    <div className="p-6">
-      <Dashboard servers={servers} />
+    <div className="text-center p-10">
+      <h1 className="text-2xl font-black">
+        App cargada correctamente ✅
+      </h1>
+      <p className="mt-2 text-sm opacity-60">
+        Nivel de acceso: {accessLevel}
+      </p>
 
-      <ServerForm
-        groups={groups}
-        isSubmitting={false}
-        onSave={handleSaveServer}
-        onCancel={() => {}}
-      />
-
-      <VehicleCategoryManager
-        categories={vehicleCategories}
-        onAdd={handleAddCategory}
-        onUpdate={handleUpdateCategory}
-        onDelete={handleDeleteCategory}
-        onClose={() => {}}
-      />
-
-      <VehicleManager
-        vehicles={vehicles}
-        categories={vehicleCategories}
-        onAdd={handleAddVehicle}
-        onEdit={handleEditVehicle}
-        onDelete={handleDeleteVehicle}
-      />
-
-      <ServiceCalendar
-        services={services}
-        groups={groups}
-        positions={[]}
-        servers={servers}
-        onAdd={() => {}}
-        onEdit={() => {}}
-        onDelete={() => {}}
-      />
-
-      <ServiceNameManager
-        names={[]}
-        onAdd={handleAddServiceName}
-        onUpdate={handleUpdateServiceName}
-        onDelete={handleDeleteServiceName}
-        onClose={() => {}}
-      />
-
-      <RankingView groups={groups} />
-      <PeriodManager onClose={() => {}} />
-      <ConfirmModal
-        isOpen={false}
-        title=""
-        message=""
-        onConfirm={() => {}}
-        onCancel={() => {}}
-      />
+      <div className="mt-6 p-6 bg-slate-100 rounded-xl shadow-md">
+        <h2 className="font-bold text-lg mb-2">Dashboard</h2>
+        <p className="text-sm opacity-70">
+          Aquí se mostrarán los servidores y estadísticas cuando se cargue la versión completa.
+        </p>
+      </div>
     </div>
   );
 };
