@@ -107,7 +107,8 @@ const App: React.FC = () => {
         const [serversData, vehiclesData, categoriesData, servicesData, namesData, groupsData] = await Promise.all([
           serverService.getServers(),
           vehicleService.getVehicles(),
-          vehicleService.getVehicleCategories(),
+          // Asegúrate de usar la función correcta aquí:
+          vehicleService.getCategories ? vehicleService.getCategories() : [],
           calendarService.getServices(),
           serviceNameService.getServiceNames(),
           serverService.getGroups()
@@ -134,21 +135,74 @@ const App: React.FC = () => {
     return <AccessGate onAccess={setAccessLevel} />;
   }
 
+  // Funciones dummy async para props
+  const dummyAddCategory = async (name: string, description?: string) => {};
+  const dummyUpdateCategory = async (id: string, name: string, description?: string) => {};
+  const dummyDeleteCategory = async (id: string) => {};
+  const dummyAddServiceName = async (name: string) => {};
+  const dummyUpdateServiceName = async (id: string, name: string) => {};
+  const dummyDeleteServiceName = async (id: string) => {};
+  const dummyOnAddService = async () => {};
+  const dummyOnEditService = async () => {};
+  const dummyOnDeleteService = async () => {};
+
   // Renderiza la vista según menú seleccionado
   const renderContent = () => {
     if (loading) return <p className="p-10 text-center">Cargando datos...</p>;
 
     switch(view) {
       case 'dashboard': return <Dashboard servers={servers} />;
-      case 'servers': return <ServerForm servers={servers} />;
-      case 'calendar': return <ServiceCalendar services={services} groups={groups} positions={[]} servers={servers} />;
-      case 'vehicles': return <VehicleManager vehicles={vehicles} categories={vehicleCategories} onAdd={() => {}} onEdit={() => {}} onDelete={() => {}} />;
-      case 'vehicle-categories': return <VehicleCategoryManager categories={vehicleCategories} onAdd={() => {}} onUpdate={() => {}} onDelete={() => {}} onClose={() => setView('dashboard')} />;
-      case 'service-names': return <ServiceNameManager names={serviceNames} onAdd={() => {}} onUpdate={() => {}} onDelete={() => {}} onClose={() => setView('dashboard')} />;
-      case 'ranking': return <RankingView groups={groups} />;
-      case 'period-manager': return <PeriodManager onClose={() => setView('dashboard')} />;
-      case 'settings': return <ConfirmModal isOpen={false} title="" message="" onConfirm={() => {}} onCancel={() => {}} />;
-      default: return <Dashboard servers={servers} />;
+      case 'servers': return <ServerForm />; // Ajusta según ServerFormProps reales
+      case 'calendar':
+        return (
+          <ServiceCalendar
+            services={services}
+            groups={groups}
+            positions={[]} // Ajusta si tienes posiciones
+            servers={servers}
+            onAdd={dummyOnAddService}
+            onEdit={dummyOnEditService}
+            onDelete={dummyOnDeleteService}
+          />
+        );
+      case 'vehicles':
+        return (
+          <VehicleManager
+            vehicles={vehicles}
+            categories={vehicleCategories}
+            onAdd={dummyAddCategory}
+            onEdit={dummyUpdateCategory}
+            onDelete={dummyDeleteCategory}
+          />
+        );
+      case 'vehicle-categories':
+        return (
+          <VehicleCategoryManager
+            categories={vehicleCategories}
+            onAdd={dummyAddCategory}
+            onUpdate={dummyUpdateCategory}
+            onDelete={dummyDeleteCategory}
+            onClose={() => setView('dashboard')}
+          />
+        );
+      case 'service-names':
+        return (
+          <ServiceNameManager
+            names={serviceNames}
+            onAdd={dummyAddServiceName}
+            onUpdate={dummyUpdateServiceName}
+            onDelete={dummyDeleteServiceName}
+            onClose={() => setView('dashboard')}
+          />
+        );
+      case 'ranking':
+        return <RankingView groups={groups} />;
+      case 'period-manager':
+        return <PeriodManager onClose={() => setView('dashboard')} />;
+      case 'settings':
+        return <ConfirmModal isOpen={false} title="" message="" onConfirm={() => {}} onCancel={() => {}} />;
+      default:
+        return <Dashboard servers={servers} />;
     }
   };
 
