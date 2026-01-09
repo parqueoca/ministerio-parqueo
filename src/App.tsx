@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
-
 import { Server } from './types';
+
 import * as serverService from './services/serverService';
 
 import Dashboard from './components/Dashboard';
-import { Loader2 } from 'lucide-react';
 
 /* ======================================================
    🔐 PANTALLA DE ACCESO
@@ -39,7 +37,7 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
           onChange={e => setCode(e.target.value)}
           placeholder="Ingrese código"
           className="w-full p-4 border rounded-xl mb-3 text-center"
-          onKeyDown={e => e.key === 'Enter' && submit()}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
         />
 
         {error && (
@@ -64,7 +62,7 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 };
 
 /* ======================================================
-   🚀 APP
+   🚀 APP PRINCIPAL
 ====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
@@ -77,30 +75,36 @@ const App: React.FC = () => {
     if (saved) setAccessLevel(saved);
   }, []);
 
-  // 🔁 Carga servidores cuando se tiene acceso
+  // 🔁 Carga los servidores una vez que se ingresa
   useEffect(() => {
-    if (!accessLevel) return;
-
-    setLoading(true);
-    serverService.getAllServers()
-      .then(data => setServers(data))
-      .finally(() => setLoading(false));
+    if (accessLevel) {
+      setLoading(true);
+      serverService.getServers()
+        .then((data: Server[]) => setServers(data))
+        .finally(() => setLoading(false));
+    }
   }, [accessLevel]);
 
   // 🔐 BLOQUEO TOTAL SI NO HAY ACCESO
-  if (!accessLevel) return <AccessGate onAccess={setAccessLevel} />;
+  if (!accessLevel) {
+    return <AccessGate onAccess={setAccessLevel} />;
+  }
 
-  // ⏳ Mostrar loader mientras se cargan los datos
+  // 🔄 Mostrar cargando mientras traemos servidores
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin w-12 h-12 text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center text-slate-600">
+        Cargando servidores...
       </div>
     );
   }
 
-  // ✅ MOSTRAR DASHBOARD CUANDO HAY ACCESO Y SERVIDORES
-  return <Dashboard servers={servers} />;
+  // ✅ APP PRINCIPAL
+  return (
+    <div className="p-6">
+      <Dashboard servers={servers} />
+    </div>
+  );
 };
 
 export default App;
