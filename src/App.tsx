@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 
 const App: React.FC = () => {
+  const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
   const [view, setView] = useState<ViewState>('dashboard');
   const [servers, setServers] = useState<Server[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
