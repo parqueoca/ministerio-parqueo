@@ -1,47 +1,13 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback
-} from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
 
-import {
-  ViewState, Server, Group, Service,
-  ParkingPosition, Vehicle, VehicleCategory, ServiceName
-} from './types';
-
+import { Server } from './types';
 import * as serverService from './services/serverService';
-import * as calendarService from './services/serviceCalendarService';
-import * as vehicleService from './services/vehicleService';
-import * as serviceNameService from './services/serviceNameService';
-
-import { normalizeString } from './utils/formatters';
-import { generateServerPDF } from './services/pdfGenerator';
 
 import Dashboard from './components/Dashboard';
-import ServerForm from './components/ServerForm';
-import ServerCard from './components/ServerCard';
-import GroupManager from './components/GroupManager';
-import PositionManager from './components/PositionManager';
-import DatabaseSetup from './components/DatabaseSetup';
-import ServiceCalendar from './components/ServiceCalendar';
-import ServiceForm from './components/ServiceForm';
-import VehicleManager from './components/VehicleManager';
-import VehicleForm from './components/VehicleForm';
-import VehicleCategoryManager from './components/VehicleCategoryManager';
-import ServiceNameManager from './components/ServiceNameManager';
-import RankingView from './components/RankingView';
-import PeriodManager from './components/PeriodManager';
-import ConfirmModal from './components/ConfirmModal';
-
-import {
-  Search, Settings, Plus, Sun, Moon, Users, MapPin,
-  Trophy, Loader2, Calendar, LayoutDashboard, Car,
-  ChevronRight, Filter, FileDown, Check, X, Tag, Type
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 /* ======================================================
    🔐 PANTALLA DE ACCESO
@@ -73,7 +39,7 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
           onChange={e => setCode(e.target.value)}
           placeholder="Ingrese código"
           className="w-full p-4 border rounded-xl mb-3 text-center"
-          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          onKeyDown={e => e.key === 'Enter' && submit()}
         />
 
         {error && (
@@ -102,6 +68,8 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 ====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
+  const [servers, setServers] = useState<Server[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // 🔁 Recupera sesión si existe
   useEffect(() => {
@@ -109,26 +77,30 @@ const App: React.FC = () => {
     if (saved) setAccessLevel(saved);
   }, []);
 
+  // 🔁 Carga servidores cuando se tiene acceso
+  useEffect(() => {
+    if (!accessLevel) return;
+
+    setLoading(true);
+    serverService.getAllServers()
+      .then(data => setServers(data))
+      .finally(() => setLoading(false));
+  }, [accessLevel]);
+
   // 🔐 BLOQUEO TOTAL SI NO HAY ACCESO
-  if (!accessLevel) {
-    return <AccessGate onAccess={setAccessLevel} />;
+  if (!accessLevel) return <AccessGate onAccess={setAccessLevel} />;
+
+  // ⏳ Mostrar loader mientras se cargan los datos
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="animate-spin w-12 h-12 text-blue-600" />
+      </div>
+    );
   }
 
-  /* ======================================================
-     👉 DESDE AQUÍ HACIA ABAJO VA TU APP REAL
-     👉 NO TOCA SEGURIDAD
-  ====================================================== */
-
-  return (
-    <div className="text-center p-10">
-      <h1 className="text-2xl font-black">
-        App cargada correctamente ✅
-      </h1>
-      <p className="mt-2 text-sm opacity-60">
-        Nivel de acceso: {accessLevel}
-      </p>
-    </div>
-  );
+  // ✅ MOSTRAR DASHBOARD CUANDO HAY ACCESO Y SERVIDORES
+  return <Dashboard servers={servers} />;
 };
 
 export default App;
