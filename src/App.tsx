@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
-import * as serverService from './services/serverService';
 
 import Dashboard from './components/Dashboard';
 import ServerForm from './components/ServerForm';
@@ -13,20 +12,18 @@ import RankingView from './components/RankingView';
 import PeriodManager from './components/PeriodManager';
 import ConfirmModal from './components/ConfirmModal';
 
-import { LayoutDashboard, Users, Calendar, Car, Trophy, Settings } from 'lucide-react';
-import { Server } from './types';
+import {
+  Server,
+  Vehicle,
+  VehicleCategory,
+  Service,
+  ServiceName,
+  Group
+} from './types';
 
-type ViewState = 
-  | 'dashboard'
-  | 'servers'
-  | 'calendar'
-  | 'vehicles'
-  | 'vehicle-categories'
-  | 'service-names'
-  | 'ranking'
-  | 'period-manager'
-  | 'settings';
-
+/* ======================================================
+   🔐 PANTALLA DE ACCESO
+====================================================== */
 const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) => {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -78,88 +75,105 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
   );
 };
 
+/* ======================================================
+   🚀 APP PRINCIPAL
+====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
-  const [view, setView] = useState<ViewState>('dashboard');
-  const [servers, setServers] = useState<Server[]>([]);
-  const [loadingServers, setLoadingServers] = useState(false);
+  const [view, setView] = useState<'dashboard' | 'servers' | 'calendar' | 'vehicles' | 'vehicle-categories' | 'service-names' | 'ranking' | 'period-manager' | 'settings'>('dashboard');
 
-  // Recupera sesión si existe
+  // Estados de datos globales
+  const [servers, setServers] = useState<Server[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [serviceNames, setServiceNames] = useState<ServiceName[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🔁 Cargar sesión y datos iniciales
   useEffect(() => {
     const saved = getSessionAccess();
     if (saved) setAccessLevel(saved);
+
+    const loadAllData = async () => {
+      setLoading(true);
+      const serverService = await import('./services/serverService');
+      const vehicleService = await import('./services/vehicleService');
+      const calendarService = await import('./services/serviceCalendarService');
+      const serviceNameService = await import('./services/serviceNameService');
+
+      try {
+        const [serversData, vehiclesData, categoriesData, servicesData, namesData, groupsData] = await Promise.all([
+          serverService.getServers(),
+          vehicleService.getVehicles(),
+          vehicleService.getVehicleCategories(),
+          calendarService.getServices(),
+          serviceNameService.getServiceNames(),
+          serverService.getGroups()
+        ]);
+
+        setServers(serversData);
+        setVehicles(vehiclesData);
+        setVehicleCategories(categoriesData);
+        setServices(servicesData);
+        setServiceNames(namesData);
+        setGroups(groupsData);
+      } catch (err) {
+        console.error('Error cargando datos:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllData();
   }, []);
 
-  // Carga los servidores
-  useEffect(() => {
-    if (!accessLevel) return;
-    setLoadingServers(true);
-    serverService.getServers()
-      .then(data => setServers(data))
-      .finally(() => setLoadingServers(false));
-  }, [accessLevel]);
-
+  // Bloqueo total si no hay acceso
   if (!accessLevel) {
     return <AccessGate onAccess={setAccessLevel} />;
   }
 
-  // Menú lateral simple
-  const renderMenu = () => (
-    <div className="w-56 h-screen bg-slate-100 dark:bg-slate-900 p-4 flex flex-col gap-2">
-      <button onClick={() => setView('dashboard')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <LayoutDashboard size={18} /> Dashboard
-      </button>
-      <button onClick={() => setView('servers')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <Users size={18} /> Servidores
-      </button>
-      <button onClick={() => setView('calendar')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <Calendar size={18} /> Calendario
-      </button>
-      <button onClick={() => setView('vehicles')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <Car size={18} /> Vehículos
-      </button>
-      <button onClick={() => setView('vehicle-categories')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        Categorías Veh.
-      </button>
-      <button onClick={() => setView('service-names')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        Nombres de Servicio
-      </button>
-      <button onClick={() => setView('ranking')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <Trophy size={18} /> Ranking
-      </button>
-      <button onClick={() => setView('period-manager')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        Periodos
-      </button>
-      <button onClick={() => setView('settings')} className="flex items-center gap-2 p-2 hover:bg-slate-200 rounded">
-        <Settings size={18} /> Ajustes
-      </button>
-    </div>
-  );
-
-  // Renderiza la vista activa
+  // Renderiza la vista según menú seleccionado
   const renderContent = () => {
-    if (loadingServers) return <p className="p-10 text-center">Cargando servidores...</p>;
+    if (loading) return <p className="p-10 text-center">Cargando datos...</p>;
 
     switch(view) {
       case 'dashboard': return <Dashboard servers={servers} />;
       case 'servers': return <ServerForm servers={servers} />;
-      case 'calendar': return <ServiceCalendar />;
-      case 'vehicles': return <VehicleManager />;
-      case 'vehicle-categories': return <VehicleCategoryManager />;
-      case 'service-names': return <ServiceNameManager />;
-      case 'ranking': return <RankingView />;
-      case 'period-manager': return <PeriodManager />;
-      case 'settings': return <ConfirmModal />;
+      case 'calendar': return <ServiceCalendar services={services} groups={groups} positions={[]} servers={servers} />;
+      case 'vehicles': return <VehicleManager vehicles={vehicles} categories={vehicleCategories} onAdd={() => {}} onEdit={() => {}} onDelete={() => {}} />;
+      case 'vehicle-categories': return <VehicleCategoryManager categories={vehicleCategories} onAdd={() => {}} onUpdate={() => {}} onDelete={() => {}} onClose={() => setView('dashboard')} />;
+      case 'service-names': return <ServiceNameManager names={serviceNames} onAdd={() => {}} onUpdate={() => {}} onDelete={() => {}} onClose={() => setView('dashboard')} />;
+      case 'ranking': return <RankingView groups={groups} />;
+      case 'period-manager': return <PeriodManager onClose={() => setView('dashboard')} />;
+      case 'settings': return <ConfirmModal isOpen={false} title="" message="" onConfirm={() => {}} onCancel={() => {}} />;
       default: return <Dashboard servers={servers} />;
     }
   };
 
   return (
     <div className="flex h-screen">
-      {renderMenu()}
-      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-slate-800">
+      {/* MENÚ LATERAL */}
+      <aside className="w-56 bg-slate-900 text-white flex flex-col">
+        <h2 className="text-xl font-black p-6 border-b border-slate-700">Ministerio Parqueo</h2>
+        <nav className="flex-1 p-4 space-y-2">
+          <button onClick={() => setView('dashboard')} className="w-full text-left p-2 rounded hover:bg-slate-800">Dashboard</button>
+          <button onClick={() => setView('servers')} className="w-full text-left p-2 rounded hover:bg-slate-800">Servidores</button>
+          <button onClick={() => setView('calendar')} className="w-full text-left p-2 rounded hover:bg-slate-800">Calendario</button>
+          <button onClick={() => setView('vehicles')} className="w-full text-left p-2 rounded hover:bg-slate-800">Vehículos</button>
+          <button onClick={() => setView('vehicle-categories')} className="w-full text-left p-2 rounded hover:bg-slate-800">Categorías Vehículos</button>
+          <button onClick={() => setView('service-names')} className="w-full text-left p-2 rounded hover:bg-slate-800">Nombres de Servicios</button>
+          <button onClick={() => setView('ranking')} className="w-full text-left p-2 rounded hover:bg-slate-800">Ranking</button>
+          <button onClick={() => setView('period-manager')} className="w-full text-left p-2 rounded hover:bg-slate-800">Periodos</button>
+          <button onClick={() => setView('settings')} className="w-full text-left p-2 rounded hover:bg-slate-800">Ajustes</button>
+        </nav>
+      </aside>
+
+      {/* CONTENIDO */}
+      <main className="flex-1 bg-slate-100 dark:bg-slate-900 overflow-auto">
         {renderContent()}
-      </div>
+      </main>
     </div>
   );
 };
