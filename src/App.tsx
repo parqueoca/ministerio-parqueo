@@ -62,8 +62,8 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="bg-white p-8 rounded-2xl w-full max-w-sm">
-        <h1 className="text-xl font-black text-center mb-6">
+      <div className="bg-white p-8 rounded-2xl w-full max-w-sm shadow-xl">
+        <h1 className="text-xl font-black text-center mb-6 uppercase">
           Acceso Ministerio Parqueo
         </h1>
 
@@ -72,7 +72,8 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
           value={code}
           onChange={e => setCode(e.target.value)}
           placeholder="Ingrese código"
-          className="w-full p-4 border rounded-xl mb-3"
+          className="w-full p-4 border rounded-xl mb-3 text-center"
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
         />
 
         {error && (
@@ -83,10 +84,14 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 
         <button
           onClick={submit}
-          className="w-full bg-blue-600 text-white p-4 rounded-xl font-black"
+          className="w-full bg-blue-600 text-white p-4 rounded-xl font-black hover:bg-blue-700 transition"
         >
           Entrar
         </button>
+
+        <p className="text-xs text-center opacity-50 mt-4">
+          Cielos Abiertos · Sistema Interno
+        </p>
       </div>
     </div>
   );
@@ -98,17 +103,21 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
 
+  // 🔁 Recupera sesión si existe
   useEffect(() => {
     const saved = getSessionAccess();
     if (saved) setAccessLevel(saved);
   }, []);
 
+  // 🔐 BLOQUEO TOTAL SI NO HAY ACCESO
   if (!accessLevel) {
     return <AccessGate onAccess={setAccessLevel} />;
   }
 
-  /* 👉 AQUÍ SIGUE TODA TU APP SIN CAMBIOS FUNCIONALES */
-  /* 👉 TODO lo demás queda EXACTAMENTE como lo tenías */
+  /* ======================================================
+     👉 DESDE AQUÍ HACIA ABAJO VA TU APP REAL
+     👉 NO TOCA SEGURIDAD
+  ====================================================== */
 
   return (
     <div className="text-center p-10">
