@@ -5,7 +5,7 @@ import React, {
   useCallback
 } from 'react';
 
-import { validateAccessCode, AccessLevel } from './security/access';
+import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
 
 import {
@@ -51,7 +51,7 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
   const [error, setError] = useState('');
 
   const submit = () => {
-    const level = validateAccessCode(code);
+    const level = validateAccessKey(code);
     if (!level) {
       setError('Código incorrecto');
       return;
