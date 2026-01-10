@@ -3,29 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
 
-import {
-  Server,
-  Vehicle,
-  VehicleCategory,
-  Service,
-  Group,
-  ServiceName
-} from './types';
-
+import { Server } from './types';
 import * as serverService from './services/serverService';
-import * as vehicleService from './services/vehicleService';
-import * as calendarService from './services/serviceCalendarService';
-import * as serviceNameService from './services/serviceNameService';
 
 import Dashboard from './components/Dashboard';
-import ServerForm from './components/ServerForm';
-import ServiceCalendar from './components/ServiceCalendar';
-import VehicleManager from './components/VehicleManager';
-import VehicleCategoryManager from './components/VehicleCategoryManager';
-import ServiceNameManager from './components/ServiceNameManager';
-import RankingView from './components/RankingView';
-import PeriodManager from './components/PeriodManager';
-import ConfirmModal from './components/ConfirmModal';
 
 /* ======================================================
    🔐 PANTALLA DE ACCESO
@@ -86,14 +67,7 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 ====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
-
-  // Datos cargados
   const [servers, setServers] = useState<Server[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [serviceNames, setServiceNames] = useState<ServiceName[]>([]);
 
   // Recupera sesión si existe
   useEffect(() => {
@@ -101,28 +75,13 @@ const App: React.FC = () => {
     if (saved) setAccessLevel(saved);
   }, []);
 
-  // Carga de datos inicial
+  // Carga de servidores
   useEffect(() => {
-    const loadData = async () => {
+    const loadServers = async () => {
       const s = await serverService.getServers();
       setServers(s);
-
-      const v = await vehicleService.getVehicles();
-      setVehicles(v);
-
-      const vc = await vehicleService.getCategories();
-      setVehicleCategories(vc);
-
-      const cal = await calendarService.getServices();
-      setServices(cal);
-
-      const g = await serverService.getGroups();
-      setGroups(g);
-
-      const sn = await serviceNameService.getNames();
-      setServiceNames(sn);
     };
-    loadData();
+    loadServers();
   }, []);
 
   if (!accessLevel) {
@@ -139,16 +98,6 @@ const App: React.FC = () => {
       </p>
 
       <Dashboard servers={servers} />
-
-      {/* Aquí puedes agregar otros módulos según la navegación */}
-      {/* <ServerForm servers={servers} /> */}
-      {/* <ServiceCalendar services={services} groups={groups} positions={[]} servers={servers} /> */}
-      {/* <VehicleManager vehicles={vehicles} categories={vehicleCategories} /> */}
-      {/* <VehicleCategoryManager categories={vehicleCategories} /> */}
-      {/* <ServiceNameManager names={serviceNames} /> */}
-      {/* <RankingView groups={groups} /> */}
-      {/* <PeriodManager /> */}
-      {/* <ConfirmModal /> */}
     </div>
   );
 };
