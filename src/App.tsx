@@ -1,6 +1,31 @@
 import React, { useState, useEffect } from 'react';
+
 import { validateAccessKey, AccessLevel } from './security/access';
 import { getSessionAccess, setSessionAccess } from './security/session';
+
+import {
+  Server,
+  Vehicle,
+  VehicleCategory,
+  Service,
+  Group,
+  ServiceName
+} from './types';
+
+import * as serverService from './services/serverService';
+import * as vehicleService from './services/vehicleService';
+import * as calendarService from './services/serviceCalendarService';
+import * as serviceNameService from './services/serviceNameService';
+
+import Dashboard from './components/Dashboard';
+import ServerForm from './components/ServerForm';
+import ServiceCalendar from './components/ServiceCalendar';
+import VehicleManager from './components/VehicleManager';
+import VehicleCategoryManager from './components/VehicleCategoryManager';
+import ServiceNameManager from './components/ServiceNameManager';
+import RankingView from './components/RankingView';
+import PeriodManager from './components/PeriodManager';
+import ConfirmModal from './components/ConfirmModal';
 
 /* ======================================================
    🔐 PANTALLA DE ACCESO
@@ -57,38 +82,73 @@ const AccessGate = ({ onAccess }: { onAccess: (level: AccessLevel) => void }) =>
 };
 
 /* ======================================================
-   🚀 APP PRINCIPAL
+   🚀 APP
 ====================================================== */
 const App: React.FC = () => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(null);
 
-  // Recupera sesión
+  // Datos cargados
+  const [servers, setServers] = useState<Server[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [serviceNames, setServiceNames] = useState<ServiceName[]>([]);
+
+  // Recupera sesión si existe
   useEffect(() => {
     const saved = getSessionAccess();
     if (saved) setAccessLevel(saved);
   }, []);
 
-  // Si no hay acceso, muestra pantalla de login
+  // Carga de datos inicial
+  useEffect(() => {
+    const loadData = async () => {
+      const s = await serverService.getServers();
+      setServers(s);
+
+      const v = await vehicleService.getVehicles();
+      setVehicles(v);
+
+      const vc = await vehicleService.getCategories();
+      setVehicleCategories(vc);
+
+      const cal = await calendarService.getServices();
+      setServices(cal);
+
+      const g = await serverService.getGroups();
+      setGroups(g);
+
+      const sn = await serviceNameService.getNames();
+      setServiceNames(sn);
+    };
+    loadData();
+  }, []);
+
   if (!accessLevel) {
     return <AccessGate onAccess={setAccessLevel} />;
   }
 
-  // APP funcional mínima: muestra dashboard y nivel de acceso
   return (
-    <div className="text-center p-10">
-      <h1 className="text-2xl font-black">
+    <div className="min-h-screen p-5 bg-slate-50 dark:bg-slate-900">
+      <h1 className="text-2xl font-black text-center mb-4">
         App cargada correctamente ✅
       </h1>
-      <p className="mt-2 text-sm opacity-60">
+      <p className="text-sm text-center opacity-60 mb-6">
         Nivel de acceso: {accessLevel}
       </p>
 
-      <div className="mt-6 p-6 bg-slate-100 rounded-xl shadow-md">
-        <h2 className="font-bold text-lg mb-2">Dashboard</h2>
-        <p className="text-sm opacity-70">
-          Aquí se mostrarán los servidores y estadísticas cuando se cargue la versión completa.
-        </p>
-      </div>
+      <Dashboard servers={servers} />
+
+      {/* Aquí puedes agregar otros módulos según la navegación */}
+      {/* <ServerForm servers={servers} /> */}
+      {/* <ServiceCalendar services={services} groups={groups} positions={[]} servers={servers} /> */}
+      {/* <VehicleManager vehicles={vehicles} categories={vehicleCategories} /> */}
+      {/* <VehicleCategoryManager categories={vehicleCategories} /> */}
+      {/* <ServiceNameManager names={serviceNames} /> */}
+      {/* <RankingView groups={groups} /> */}
+      {/* <PeriodManager /> */}
+      {/* <ConfirmModal /> */}
     </div>
   );
 };
