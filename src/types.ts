@@ -1,4 +1,3 @@
-
 export enum ServerStatus {
   ACTIVO = 'Activo',
   INACTIVO = 'Inactivo'
@@ -95,7 +94,7 @@ export interface Vehicle {
   anio?: number;
   color?: string;
   categoria_id?: string;
-  nota?: string;
+  note?: string;
   created_at?: string;
   vehiculo_categorias?: {
     nombre: string;
@@ -141,6 +140,16 @@ export interface Service {
   createdAt: number;
 }
 
+// --- AUTH MODULE TYPES ---
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+  active: boolean;
+  created_at?: string;
+}
+
 export type ViewState = 
   | 'dashboard' 
   | 'list' 
@@ -158,4 +167,4 @@ export type ViewState =
   | 'ranking'
   | 'attendance'
   | 'period-manager'
-  | 'setup-repair';
+  | 'pin-manager';
