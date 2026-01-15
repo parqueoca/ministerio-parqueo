@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ViewState, Server, Group, ServerStatus, Service, ParkingPosition, Vehicle, VehicleCategory, ServiceName } from './types';
 import * as serverService from './services/serverService';
@@ -22,8 +21,10 @@ import ServiceNameManager from './components/ServiceNameManager';
 import RankingView from './components/RankingView';
 import PeriodManager from './components/PeriodManager';
 import ConfirmModal from './components/ConfirmModal';
+import Gatekeeper from './components/Gatekeeper';
+import PinManager from './components/PinManager';
 import { 
-  Search, Settings, Plus, Sun, Moon, Users, MapPin, Trophy, Loader2, Calendar, LayoutDashboard, Car, ChevronRight, Filter, FileDown, Check, X, Tag, Type
+  Search, Settings, Plus, Sun, Moon, Users, MapPin, Trophy, Loader2, Calendar, LayoutDashboard, Car, ChevronRight, Filter, FileDown, Check, X, Tag, Type, Key
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -38,9 +39,15 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [setupRequired, setSetupRequired] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   
+  // --- Auth State ---
+  const [accessPin, setAccessPin] = useState(() => localStorage.getItem('agenda_access_pin') || '7755');
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    const session = sessionStorage.getItem('agenda_authorized');
+    return session === 'true';
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [serverGroupFilter, setServerGroupFilter] = useState('ALL');
   const [editingServer, setEditingServer] = useState<Server | null>(null);
@@ -85,11 +92,14 @@ const App: React.FC = () => {
       setServiceNames(serviceNamesData || []);
     } catch (err: any) {
       console.error("Error cargando datos:", err);
-      if (err.message?.includes('not find') || err.message?.includes('exist')) setSetupRequired(true);
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    if (isAuthorized) {
+      fetchData(); 
+    }
+  }, [fetchData, isAuthorized]);
   
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');
@@ -311,6 +321,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAuthorization = () => {
+    setIsAuthorized(true);
+    sessionStorage.setItem('agenda_authorized', 'true');
+  };
+
+  const handleSavePin = (newPin: string) => {
+    setAccessPin(newPin);
+    localStorage.setItem('agenda_access_pin', newPin);
+  };
+
   const TabButton = ({ id, label, icon: Icon }: { id: ViewState, label: string, icon: any }) => (
     <button 
       onClick={() => setView(id)}
@@ -321,6 +341,10 @@ const App: React.FC = () => {
       {view === id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-white rounded-t-full" />}
     </button>
   );
+
+  if (!isAuthorized) {
+    return <Gatekeeper correctPin={accessPin} onAuthorized={handleAuthorization} />;
+  }
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 min-h-screen max-w-lg mx-auto flex flex-col relative transition-colors duration-300">
@@ -341,7 +365,7 @@ const App: React.FC = () => {
             </div>
         </div>
 
-        {!['form', 'service-form', 'vehicle-form', 'groups', 'positions', 'period-manager', 'vehicle-categories', 'service-names'].includes(view) && (
+        {!['form', 'service-form', 'vehicle-form', 'groups', 'positions', 'period-manager', 'vehicle-categories', 'service-names', 'pin-manager'].includes(view) && (
           <nav className="flex px-1 bg-blue-600 dark:bg-slate-900 border-t border-white/5">
             <TabButton id="dashboard" label="Inicio" icon={LayoutDashboard} />
             <TabButton id="list" label="Servidores" icon={Users} />
@@ -468,6 +492,15 @@ const App: React.FC = () => {
               <div className="space-y-4 animate-fade-in">
                 <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Panel Administrativo</h2>
                 <div className="grid gap-3">
+                  <button onClick={() => setView('pin-manager')} className="card-chrome w-full flex justify-between p-5 rounded-2xl items-center active:scale-[0.98] transition-all bg-blue-50/10 border-blue-200">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center">
+                        <Key size={20} />
+                      </div>
+                      <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">PIN de Acceso</span>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-300" />
+                  </button>
                   <button onClick={() => setView('groups')} className="card-chrome w-full flex justify-between p-5 rounded-2xl items-center active:scale-[0.98] transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl flex items-center justify-center">
@@ -519,6 +552,7 @@ const App: React.FC = () => {
             {view === 'groups' && <GroupManager groups={groups} onAddGroup={async (n) => { await serverService.addGroup(n); fetchData(); }} onDeleteGroup={handleDeleteGroup} onClose={() => setView('settings')} />}
             {view === 'positions' && <PositionManager positions={positions} onAdd={async (c, n) => { await calendarService.addPosition(c, n); fetchData(); }} onDelete={handleDeletePosition} onClose={() => setView('settings')} />}
             {view === 'period-manager' && <PeriodManager onClose={() => setView('settings')} />}
+            {view === 'pin-manager' && <PinManager currentPin={accessPin} onSave={handleSavePin} onClose={() => setView('settings')} />}
             {view === 'vehicle-categories' && <VehicleCategoryManager categories={categories} onAdd={async (n, d) => { await vehicleService.addCategory({ nombre: n, descripcion: d, activo: true }); fetchData(); }} onUpdate={async (id, n, d) => { await vehicleService.updateCategory(id, { nombre: n, descripcion: d }); fetchData(); }} onDelete={handleDeleteVehicleCategory} onClose={() => setView('settings')} />}
             {view === 'service-names' && (
               <ServiceNameManager 
