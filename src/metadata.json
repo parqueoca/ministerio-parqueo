@@ -1,1 +1,7 @@
-
+{
+  "name": "Ministerio Servicio Parqueo CA",
+  "description": "Aplicación oficial para la gestión de servidores y parqueo de la Iglesia Cielos Abiertos. Creada por Juan Ramon Esteban.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
