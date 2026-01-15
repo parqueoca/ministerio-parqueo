@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Vehicle, VehicleCategory } from '../types';
 import { ChevronLeft, Save, Car, User, Phone, Tag, Calendar, Palette, FileText, Filter } from 'lucide-react';
@@ -11,6 +12,7 @@ interface VehicleFormProps {
 }
 
 const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSave, onCancel }) => {
+  // Inicializamos el estado usando 'note' para coincidir con types.ts
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     placa: '',
     propietario: '',
@@ -20,7 +22,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
     anio: undefined,
     color: '',
     categoria_id: '',
-    nota: ''
+    note: ''
   });
 
   useEffect(() => {
@@ -28,25 +30,30 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
       setFormData({
         ...initialData,
         categoria_id: initialData.categoria_id || '',
-        anio: initialData.anio || undefined
+        anio: initialData.anio || undefined,
+        note: initialData.note || ''
       });
     }
   }, [initialData]);
 
-  const handleInputChange = (field: keyof Vehicle, value: string) => {
-    if (field === 'placa') {
-      setFormData(prev => ({ ...prev, placa: value.toUpperCase() }));
-    } else if (field === 'propietario' || field === 'marca' || field === 'modelo' || field === 'color' || field === 'nota') {
-      setFormData(prev => ({ ...prev, [field]: toTitleCase(value) }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof Vehicle, value: any) => {
+    let finalValue = value;
+    
+    // Aplicamos transformaciones visuales según el campo
+    if (field === 'placa' && typeof value === 'string') {
+      finalValue = value.toUpperCase();
+    } else if (typeof value === 'string' && ['propietario', 'marca', 'modelo', 'color', 'note'].includes(field as string)) {
+      finalValue = toTitleCase(value);
     }
+
+    setFormData(prev => ({ ...prev, [field]: finalValue }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     const dataToSave = { ...formData };
+    // Aseguramos que si no hay categoría, se guarde como undefined o null para Supabase
     if (dataToSave.categoria_id === '') {
       dataToSave.categoria_id = undefined;
     }
@@ -55,7 +62,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 h-full flex flex-col animate-slide-in-up pb-20 overflow-hidden transition-colors duration-300">
+    <div className="bg-white dark:bg-slate-900 h-full flex flex-col animate-slide-up pb-20 overflow-hidden transition-colors duration-300">
+      {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-slate-800 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">
         <button onClick={onCancel} className="p-2 -ml-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
             <ChevronLeft size={24} />
@@ -73,7 +81,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
             <input 
               required
               type="text" 
-              value={formData.placa}
+              value={formData.placa || ''}
               onChange={e => handleInputChange('placa', e.target.value)}
               placeholder="A000000"
               className="w-full p-4 bg-gray-50 dark:bg-slate-800 rounded-xl text-lg font-black tracking-widest border-2 border-transparent focus:border-blue-500 outline-none transition-all dark:text-white"
@@ -85,7 +93,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
             <input 
               required
               type="text" 
-              value={formData.propietario}
+              value={formData.propietario || ''}
               onChange={e => handleInputChange('propietario', e.target.value)}
               placeholder="Nombre completo"
               className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
@@ -97,8 +105,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Phone size={12} /> CELULAR</label>
               <input 
                 type="tel" 
-                value={formData.celular}
-                onChange={e => setFormData({...formData, celular: e.target.value})}
+                value={formData.celular || ''}
+                onChange={e => handleInputChange('celular', e.target.value)}
                 placeholder="809-000-0000"
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
               />
@@ -107,7 +115,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Filter size={12} /> CATEGORÍA</label>
               <select 
                 value={formData.categoria_id || ''}
-                onChange={e => setFormData({...formData, categoria_id: e.target.value})}
+                onChange={e => handleInputChange('categoria_id', e.target.value)}
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
               >
                 <option value="">Seleccionar...</option>
@@ -121,7 +129,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Car size={12} /> MARCA</label>
               <input 
                 type="text" 
-                value={formData.marca}
+                value={formData.marca || ''}
                 onChange={e => handleInputChange('marca', e.target.value)}
                 placeholder="Toyota"
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
@@ -131,7 +139,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><FileText size={12} /> MODELO</label>
               <input 
                 type="text" 
-                value={formData.modelo}
+                value={formData.modelo || ''}
                 onChange={e => handleInputChange('modelo', e.target.value)}
                 placeholder="Hilux"
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
@@ -145,7 +153,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <input 
                 type="number" 
                 value={formData.anio || ''}
-                onChange={e => setFormData({...formData, anio: e.target.value ? parseInt(e.target.value) : undefined})}
+                onChange={e => handleInputChange('anio', e.target.value ? parseInt(e.target.value) : undefined)}
                 placeholder="2024"
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
               />
@@ -154,7 +162,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Palette size={12} /> COLOR</label>
               <input 
                 type="text" 
-                value={formData.color}
+                value={formData.color || ''}
                 onChange={e => handleInputChange('color', e.target.value)}
                 placeholder="Blanco"
                 className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
@@ -166,8 +174,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><FileText size={12} /> NOTA ADICIONAL</label>
             <textarea 
               rows={3}
-              value={formData.nota}
-              onChange={e => handleInputChange('nota', e.target.value)}
+              value={formData.note || ''}
+              onChange={e => handleInputChange('note', e.target.value)}
               placeholder="Observaciones..."
               className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm border-none focus:ring-2 focus:ring-blue-500 dark:text-white"
             />
@@ -176,7 +184,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2 mt-4"
+          className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mt-4"
         >
           <Save size={20} />
           <span>Guardar Vehículo</span>
