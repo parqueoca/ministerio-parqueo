@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Lock, Delete } from 'lucide-react';
 
@@ -18,7 +19,6 @@ const Gatekeeper: React.FC<GatekeeperProps> = ({ correctPin, onAuthorized }) => 
       setPin(newPin);
       
       if (newPin.length === 4) {
-        // Validación dual: PIN de usuario O PIN Maestro
         if (newPin === correctPin || newPin === MASTER_PIN) {
           onAuthorized();
         } else {
@@ -43,12 +43,12 @@ const Gatekeeper: React.FC<GatekeeperProps> = ({ correctPin, onAuthorized }) => 
       <div className="w-full flex flex-col items-center mt-12 space-y-4 animate-scale-up">
         <div className="w-28 h-28 bg-white dark:bg-white rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden border-4 border-slate-50 dark:border-slate-900">
            <img 
-            src="https://api.dicebear.com/7.x/initials/svg?seed=CA&backgroundColor=000000&textColor=ffffff" 
+            src="./logo.png" 
             alt="CA Logo" 
             className="w-full h-full object-cover p-2"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement!.innerHTML = '<div class="text-4xl font-black text-slate-900">CA</div>';
+              // Si falla al cargar el logo.png, mostramos el logo por defecto de initials
+              e.currentTarget.src = "https://api.dicebear.com/7.x/initials/svg?seed=CA&backgroundColor=000000&textColor=ffffff";
             }}
            />
         </div>
