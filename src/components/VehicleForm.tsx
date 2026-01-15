@@ -12,7 +12,6 @@ interface VehicleFormProps {
 }
 
 const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSave, onCancel }) => {
-  // Inicializamos el estado usando 'note' para coincidir con types.ts
   const [formData, setFormData] = useState<Partial<Vehicle>>({
     placa: '',
     propietario: '',
@@ -39,7 +38,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
   const handleInputChange = (field: keyof Vehicle, value: any) => {
     let finalValue = value;
     
-    // Aplicamos transformaciones visuales según el campo
     if (field === 'placa' && typeof value === 'string') {
       finalValue = value.toUpperCase();
     } else if (typeof value === 'string' && ['propietario', 'marca', 'modelo', 'color', 'note'].includes(field as string)) {
@@ -51,19 +49,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     const dataToSave = { ...formData };
-    // Aseguramos que si no hay categoría, se guarde como undefined o null para Supabase
     if (dataToSave.categoria_id === '') {
       dataToSave.categoria_id = undefined;
     }
-    
     onSave(dataToSave);
   };
 
   return (
     <div className="bg-white dark:bg-slate-900 h-full flex flex-col animate-slide-up pb-20 overflow-hidden transition-colors duration-300">
-      {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-gray-100 dark:border-slate-800 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10">
         <button onClick={onCancel} className="p-2 -ml-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
             <ChevronLeft size={24} />
@@ -74,7 +68,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar">
-        
         <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Tag size={12} /> PLACA (OBLIGATORIO)</label>
