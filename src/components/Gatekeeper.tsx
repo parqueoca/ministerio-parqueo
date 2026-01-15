@@ -42,7 +42,7 @@ const Gatekeeper: React.FC<GatekeeperProps> = ({ correctPin, onAuthorized }) => 
       <div className="w-full flex flex-col items-center mt-12 space-y-4 animate-scale-up">
         <div className="w-28 h-28 bg-white dark:bg-white rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden border-4 border-slate-50 dark:border-slate-900">
            <img 
-            src="logo.png" 
+            src="/logo.png" 
             alt="Logo Ministerio" 
             className="w-full h-full object-contain p-2"
             onError={(e) => {
