@@ -70,7 +70,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar">
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Tag size={12} /> PLACA (OBLIGATORIO)</label>
+            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">PLACA (OBLIGATORIO)</label>
             <input 
               required
               type="text" 
@@ -82,7 +82,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><User size={12} /> PROPIETARIO</label>
+            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">PROPIETARIO</label>
             <input 
               required
               type="text" 
@@ -95,7 +95,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Phone size={12} /> CELULAR</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">CELULAR</label>
               <input 
                 type="tel" 
                 value={formData.celular || ''}
@@ -105,7 +105,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Filter size={12} /> CATEGORÍA</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">CATEGORÍA</label>
               <select 
                 value={formData.categoria_id || ''}
                 onChange={e => handleInputChange('categoria_id', e.target.value)}
@@ -119,7 +119,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Car size={12} /> MARCA</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">MARCA</label>
               <input 
                 type="text" 
                 value={formData.marca || ''}
@@ -129,7 +129,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><FileText size={12} /> MODELO</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">MODELO</label>
               <input 
                 type="text" 
                 value={formData.modelo || ''}
@@ -142,7 +142,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Calendar size={12} /> AÑO</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">AÑO</label>
               <input 
                 type="number" 
                 value={formData.anio || ''}
@@ -152,7 +152,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Palette size={12} /> COLOR</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">COLOR</label>
               <input 
                 type="text" 
                 value={formData.color || ''}
@@ -164,7 +164,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ initialData, categories, onSa
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><FileText size={12} /> NOTA ADICIONAL</label>
+            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">NOTA ADICIONAL</label>
             <textarea 
               rows={3}
               value={formData.note || ''}
